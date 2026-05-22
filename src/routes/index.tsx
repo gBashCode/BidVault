@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Countdown, CircularCountdown } from "@/components/countdown";
 import { RevealShowcase, SealedBidCard } from "@/components/bid-card";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -44,6 +45,7 @@ function Index() {
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <SiteHeader />
       <Hero />
+      <LogoWall />
       <TrustStrip />
       <HowItWorks />
       <LiveReveal />
@@ -58,12 +60,35 @@ function Index() {
 
 /* ---------- HERO ---------- */
 function Hero() {
+  const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
   return (
-    <section className="relative overflow-hidden border-b border-border">
+    <section 
+      onMouseMove={handleMouseMove}
+      className="relative overflow-hidden border-b border-border"
+    >
       <div className="absolute inset-0 bg-radial-ember opacity-90" />
       <div className="absolute inset-0 bg-grid opacity-[0.35]" />
       <div className="absolute inset-0 bg-noise opacity-40 mix-blend-overlay" />
       
+      {/* Global Mouse Background Glow */}
+      <div 
+        className="global-mouse-glow" 
+        style={{ 
+          left: mousePos.x, 
+          top: mousePos.y,
+          display: mousePos.x === -1000 ? "none" : "block"
+        }} 
+      />
+
       {/* Decorative Orbs */}
       <div className="glow-orb absolute -top-40 -left-40 h-[600px] w-[600px] bg-primary/20" />
       <div className="glow-orb absolute top-60 right-10 h-[400px] w-[400px] bg-amber-deep/15" />
@@ -89,7 +114,12 @@ function Hero() {
             same atomic moment — with an immutable audit trail to prove it.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <button className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform">
+            <button 
+              onClick={() => toast.success("Enterprise Demo Requested", {
+                description: "Our procurement engineering team will contact you within 2 hours."
+              })}
+              className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform cursor-pointer"
+            >
               Book enterprise demo
             </button>
             <Link
@@ -118,7 +148,14 @@ function Hero() {
         {/* Right: Live tender card */}
         <div className="relative reveal-on-scroll delay-100">
           <div className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-primary/30 via-transparent to-amber-deep/20 blur-3xl opacity-80 animate-pulse" style={{ animationDuration: "8s" }} />
-          <div className="glass-card relative rounded-2xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]">
+          <div 
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+              e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+            }}
+            className="glass-card spotlight-card relative rounded-2xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]"
+          >
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -657,11 +694,22 @@ function FinalCta() {
           When fairness must be <span className="text-gradient-ember">proven</span>, not promised.
         </h2>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <button className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform">
+          <button 
+            onClick={() => toast.success("Request Submitted Successfully", {
+              description: "A secure channel link has been generated and sent."
+            })}
+            className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform cursor-pointer"
+          >
             Talk to procurement engineering
           </button>
           <a
             href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              toast.info("Downloading Protocol Whitepaper v4.2", {
+                description: "The cryptographically verified PDF has been downloaded."
+              });
+            }}
             className="inline-flex h-12 items-center rounded-md border border-ivory/20 bg-ivory/5 px-6 text-[14px] font-medium text-ivory backdrop-blur hover:bg-ivory/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             Read the protocol whitepaper
@@ -675,6 +723,77 @@ function FinalCta() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* ---------- LOGO WALL ---------- */
+function LogoWall() {
+  const logos = [
+    {
+      name: "EuroGrid",
+      svg: (
+        <svg className="h-5 w-auto" viewBox="0 0 100 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="1.5"/>
+          <text x="32" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>EUROGRID</text>
+        </svg>
+      )
+    },
+    {
+      name: "Zurich Transit",
+      svg: (
+        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M7 7l6 5-6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <text x="30" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>ZURICH T.</text>
+        </svg>
+      )
+    },
+    {
+      name: "BE Railways",
+      svg: (
+        <svg className="h-5 w-auto" viewBox="0 0 110 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11 4L5 15h12L11 4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M3 19h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <text x="28" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>BE RAILWAY</text>
+        </svg>
+      )
+    },
+    {
+      name: "Helvetic Gas",
+      svg: (
+        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11 4c3 3.5 6 6 6 8.5a6 6 0 1 1-12 0c0-2.5 3-5 6-8.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <text x="30" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>HELVETIC G.</text>
+        </svg>
+      )
+    },
+    {
+      name: "Alpine Power",
+      svg: (
+        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 13h6L8 19l8-9h-6l4-6L5 13z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+          <text x="28" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>ALPINE POWER</text>
+        </svg>
+      )
+    }
+  ];
+
+  return (
+    <div className="border-b border-border/60 bg-surface/50 py-8 reveal-on-scroll">
+      <div className="mx-auto max-w-[1400px] px-6">
+        <p className="text-center font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground/60">
+          Trusted by state operators & compliance-driven networks
+        </p>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-12 md:gap-20">
+          {logos.map((logo) => (
+            <div key={logo.name} className="logo-wall-item select-none cursor-pointer">
+              {logo.svg}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

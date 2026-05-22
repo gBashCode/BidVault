@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/audit")({
   head: () => ({
@@ -69,10 +70,27 @@ function AuditPage() {
               Event log · GOV-2026-ROAD-INFRA-014
             </div>
             <div className="flex gap-2">
-              <button className="h-8 rounded-md border border-border bg-surface px-3 text-[11px]">
+              <button 
+                onClick={() => toast.success("Event Log Exported", {
+                  description: "Download of audit_ledger_export.csv started."
+                })}
+                className="h-8 rounded-md border border-border bg-surface px-3 text-[11px] cursor-pointer hover:bg-muted"
+              >
                 Export CSV
               </button>
-              <button className="h-8 rounded-md border border-border bg-surface px-3 text-[11px]">
+              <button 
+                onClick={() => {
+                  toast.promise(
+                    new Promise((resolve) => setTimeout(resolve, 1200)),
+                    {
+                      loading: "Verifying Merkle root & signatures...",
+                      success: "Audit trail fully verified (91 events)!",
+                      error: "Verification failed."
+                    }
+                  );
+                }}
+                className="h-8 rounded-md border border-border bg-surface px-3 text-[11px] cursor-pointer hover:bg-muted text-primary border-primary/20"
+              >
                 Verify chain
               </button>
             </div>
