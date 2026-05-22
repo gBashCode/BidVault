@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { CircularCountdown } from "@/components/countdown";
+import { getTenders } from "../actions/tenders";
+import { getAuditLogs } from "../actions/audit";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -9,6 +11,13 @@ export const Route = createFileRoute("/dashboard")({
       { name: "description", content: "Operate active tenders, monitor reveal queue, vendor activity and audit ledger." },
     ],
   }),
+  loader: async () => {
+    const [tenders, auditLogs] = await Promise.all([
+      getTenders(),
+      getAuditLogs(),
+    ]);
+    return { tenders, auditLogs };
+  },
   component: Dashboard,
 });
 
@@ -355,7 +364,13 @@ function VendorActivity() {
 }
 
 function AuditLedger() {
-  const rows = [
+  const { auditLogs } = Route.useLoaderData();
+  const rows = auditLogs.length > 0 ? auditLogs.map((log) => [
+    new Date(log.timestamp).toLocaleTimeString(),
+    log.event,
+    log.actor,
+    log.hash.substring(0, 12) + "…",
+  ]) : [
     ["T-44:02", "doc.replace", "Concord Engineering", "0x4fe2…c1b0"],
     ["T-45:11", "bid.seal", "Helios Civil Works AG", "0x8f3e…7e10"],
     ["T-45:12", "merkle.advance", "—", "root 0x9c4e…1aa2"],

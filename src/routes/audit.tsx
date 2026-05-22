@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
+import { getAuditLogs } from "../actions/audit";
 
 export const Route = createFileRoute("/audit")({
   head: () => ({
@@ -8,21 +9,29 @@ export const Route = createFileRoute("/audit")({
       { name: "description", content: "Immutable, cryptographically verifiable audit trail across every tender event." },
     ],
   }),
+  loader: async () => {
+    return await getAuditLogs();
+  },
   component: AuditPage,
 });
-
-const events = [
-  { t: "2026-04-23T13:18:42Z", k: "bid.seal", actor: "Helios Civil Works AG", hash: "0x8f3e9a21bc4d7e10ff019cba0e72ef41", height: 2_184_991 },
-  { t: "2026-04-23T13:14:31Z", k: "bid.seal", actor: "Meridian Roads Ltd", hash: "0x223e2244e7019012ab7c1cc92e0e3f01", height: 2_184_990 },
-  { t: "2026-04-23T13:10:18Z", k: "vendor.join", actor: "Northwind Construct", hash: "0xb112f00dd2c14a09ae9a40f773115022", height: 2_184_989 },
-  { t: "2026-04-23T12:55:11Z", k: "doc.replace", actor: "Concord Engineering", hash: "0x4fe21cc193b0c1b08e44e0aa5511e110", height: 2_184_988 },
-  { t: "2026-04-23T11:00:02Z", k: "merkle.advance", actor: "system", hash: "root 0x9c4e44a91aa2003e771bbcd031a02201", height: 2_184_987 },
-  { t: "2026-04-22T17:10:00Z", k: "tender.publish", actor: "m.vlaeminck@fps-mob.be", hash: "0x77abc09812334e1d", height: 2_184_900 },
-  { t: "2026-04-22T16:42:51Z", k: "policy.attach", actor: "m.vlaeminck@fps-mob.be", hash: "policy v2.1", height: 2_184_899 },
-  { t: "2026-04-22T16:00:00Z", k: "deadline.lock", actor: "system", hash: "block 2,184,891 · T+72h", height: 2_184_891 },
-];
-
 function AuditPage() {
+  const auditLogs = Route.useLoaderData();
+  const events = auditLogs.length > 0 ? auditLogs.map((log) => ({
+    t: new Date(log.timestamp).toISOString(),
+    k: log.event,
+    actor: log.actor,
+    hash: log.hash,
+    height: 2_184_991, // Mock height for now since we don't have an Ethereum integration yet
+  })) : [
+    { t: "2026-04-23T13:18:42Z", k: "bid.seal", actor: "Helios Civil Works AG", hash: "0x8f3e9a21bc4d7e10ff019cba0e72ef41", height: 2_184_991 },
+    { t: "2026-04-23T13:14:31Z", k: "bid.seal", actor: "Meridian Roads Ltd", hash: "0x223e2244e7019012ab7c1cc92e0e3f01", height: 2_184_990 },
+    { t: "2026-04-23T13:10:18Z", k: "vendor.join", actor: "Northwind Construct", hash: "0xb112f00dd2c14a09ae9a40f773115022", height: 2_184_989 },
+    { t: "2026-04-23T12:55:11Z", k: "doc.replace", actor: "Concord Engineering", hash: "0x4fe21cc193b0c1b08e44e0aa5511e110", height: 2_184_988 },
+    { t: "2026-04-23T11:00:02Z", k: "merkle.advance", actor: "system", hash: "root 0x9c4e44a91aa2003e771bbcd031a02201", height: 2_184_987 },
+    { t: "2026-04-22T17:10:00Z", k: "tender.publish", actor: "m.vlaeminck@fps-mob.be", hash: "0x77abc09812334e1d", height: 2_184_900 },
+    { t: "2026-04-22T16:42:51Z", k: "policy.attach", actor: "m.vlaeminck@fps-mob.be", hash: "policy v2.1", height: 2_184_899 },
+    { t: "2026-04-22T16:00:00Z", k: "deadline.lock", actor: "system", hash: "block 2,184,891 · T+72h", height: 2_184_891 },
+  ];
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
