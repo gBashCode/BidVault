@@ -73,6 +73,7 @@ model Tender {
   createdBy          User         @relation("TenderCreatedBy", fields: [createdById], references: [id])
   bids               Bid[]
   auditLogs          AuditLog[]
+  documents          TenderDocument[]
 
   @@index([orgId, status])
   @@index([revealTime, status]) // critical for worker
@@ -84,7 +85,7 @@ model Bid {
   vendorId      String    // User.id where role=VENDOR
   commitment    String    // keccak256(plaintext + salt) - from Phase 1
   encryptedBlob String    // S3 URL to ciphertext
-  saltHash      String    // keccak256(salt) - allows checking salt reuse without storing salt
+  saltHash      String    // createCommitment({salt}, salt) — used to verify salt at reveal time
   submittedAt   DateTime  @default(now())
 
   // NULL until after revealTime + vendor calls reveal
@@ -95,6 +96,7 @@ model Bid {
 
   tender        Tender    @relation(fields: [tenderId], references: [id], onDelete: Cascade)
   vendor        User      @relation(fields: [vendorId], references: [id])
+  withdrawal    BidWithdrawal?
 
   @@unique([tenderId, vendorId]) // one bid per vendor per tender
   @@index([tenderId])
@@ -141,4 +143,31 @@ model WebhookDelivery {
   webhook     Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId, deliveredAt])
+}
+
+// ─── TenderDocument ───────────────────────────────────────────
+// Uploaded by procurement manager; served to vendors via signed URL
+
+model TenderDocument {
+  id           String   @id @default(cuid())
+  tenderId     String
+  filename     String
+  s3Key        String
+  fileSize     Int
+  uploadedById String
+  createdAt    DateTime @default(now())
+  tender       Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@index([tenderId])
+}
+
+// ─── BidWithdrawal ────────────────────────────────────────────
+// Created when a vendor withdraws before submissionDeadline
+
+model BidWithdrawal {
+  id          String   @id @default(cuid())
+  bidId       String   @unique
+  reason      String?
+  withdrawnAt DateTime @default(now())
+  bid         Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
 }

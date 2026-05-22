@@ -14,9 +14,11 @@ import { Route as AuditRouteImport } from './routes/audit'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendorIndexRouteImport } from './routes/vendor.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as VerifyTenderIdRouteImport } from './routes/verify.$tenderId'
 import { Route as VendorWithdrawRouteImport } from './routes/vendor.withdraw'
 import { Route as VendorTechnicalRouteImport } from './routes/vendor.technical'
 import { Route as VendorSubmitRouteImport } from './routes/vendor.submit'
+import { Route as VendorRevealRouteImport } from './routes/vendor.reveal'
 import { Route as VendorQaRouteImport } from './routes/vendor.qa'
 import { Route as VendorDocumentsRouteImport } from './routes/vendor.documents'
 import { Route as VendorComplianceRouteImport } from './routes/vendor.compliance'
@@ -30,6 +32,7 @@ import { Route as DashboardInvitationsRouteImport } from './routes/dashboard.inv
 import { Route as DashboardDraftsRouteImport } from './routes/dashboard.drafts'
 import { Route as DashboardCustodyStatusRouteImport } from './routes/dashboard.custody-status'
 import { Route as DashboardComplianceRouteImport } from './routes/dashboard.compliance'
+import { Route as ApiAuthMeRouteImport } from './routes/api.auth.me'
 
 const VendorRoute = VendorRouteImport.update({
   id: '/vendor',
@@ -56,6 +59,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyTenderIdRoute = VerifyTenderIdRouteImport.update({
+  id: '/verify/$tenderId',
+  path: '/verify/$tenderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VendorWithdrawRoute = VendorWithdrawRouteImport.update({
   id: '/withdraw',
   path: '/withdraw',
@@ -69,6 +77,11 @@ const VendorTechnicalRoute = VendorTechnicalRouteImport.update({
 const VendorSubmitRoute = VendorSubmitRouteImport.update({
   id: '/submit',
   path: '/submit',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorRevealRoute = VendorRevealRouteImport.update({
+  id: '/reveal',
+  path: '/reveal',
   getParentRoute: () => VendorRoute,
 } as any)
 const VendorQaRoute = VendorQaRouteImport.update({
@@ -136,6 +149,11 @@ const DashboardComplianceRoute = DashboardComplianceRouteImport.update({
   path: '/dashboard/compliance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthMeRoute = ApiAuthMeRouteImport.update({
+  id: '/api/auth/me',
+  path: '/api/auth/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -154,11 +172,14 @@ export interface FileRoutesByFullPath {
   '/vendor/compliance': typeof VendorComplianceRoute
   '/vendor/documents': typeof VendorDocumentsRoute
   '/vendor/qa': typeof VendorQaRoute
+  '/vendor/reveal': typeof VendorRevealRoute
   '/vendor/submit': typeof VendorSubmitRoute
   '/vendor/technical': typeof VendorTechnicalRoute
   '/vendor/withdraw': typeof VendorWithdrawRoute
+  '/verify/$tenderId': typeof VerifyTenderIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/vendor/': typeof VendorIndexRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -176,11 +197,14 @@ export interface FileRoutesByTo {
   '/vendor/compliance': typeof VendorComplianceRoute
   '/vendor/documents': typeof VendorDocumentsRoute
   '/vendor/qa': typeof VendorQaRoute
+  '/vendor/reveal': typeof VendorRevealRoute
   '/vendor/submit': typeof VendorSubmitRoute
   '/vendor/technical': typeof VendorTechnicalRoute
   '/vendor/withdraw': typeof VendorWithdrawRoute
+  '/verify/$tenderId': typeof VerifyTenderIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/vendor': typeof VendorIndexRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -200,11 +224,14 @@ export interface FileRoutesById {
   '/vendor/compliance': typeof VendorComplianceRoute
   '/vendor/documents': typeof VendorDocumentsRoute
   '/vendor/qa': typeof VendorQaRoute
+  '/vendor/reveal': typeof VendorRevealRoute
   '/vendor/submit': typeof VendorSubmitRoute
   '/vendor/technical': typeof VendorTechnicalRoute
   '/vendor/withdraw': typeof VendorWithdrawRoute
+  '/verify/$tenderId': typeof VerifyTenderIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/vendor/': typeof VendorIndexRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -225,11 +252,14 @@ export interface FileRouteTypes {
     | '/vendor/compliance'
     | '/vendor/documents'
     | '/vendor/qa'
+    | '/vendor/reveal'
     | '/vendor/submit'
     | '/vendor/technical'
     | '/vendor/withdraw'
+    | '/verify/$tenderId'
     | '/dashboard/'
     | '/vendor/'
+    | '/api/auth/me'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -247,11 +277,14 @@ export interface FileRouteTypes {
     | '/vendor/compliance'
     | '/vendor/documents'
     | '/vendor/qa'
+    | '/vendor/reveal'
     | '/vendor/submit'
     | '/vendor/technical'
     | '/vendor/withdraw'
+    | '/verify/$tenderId'
     | '/dashboard'
     | '/vendor'
+    | '/api/auth/me'
   id:
     | '__root__'
     | '/'
@@ -270,11 +303,14 @@ export interface FileRouteTypes {
     | '/vendor/compliance'
     | '/vendor/documents'
     | '/vendor/qa'
+    | '/vendor/reveal'
     | '/vendor/submit'
     | '/vendor/technical'
     | '/vendor/withdraw'
+    | '/verify/$tenderId'
     | '/dashboard/'
     | '/vendor/'
+    | '/api/auth/me'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -291,7 +327,9 @@ export interface RootRouteChildren {
   DashboardRevealQueueRoute: typeof DashboardRevealQueueRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardVendorsRoute: typeof DashboardVendorsRoute
+  VerifyTenderIdRoute: typeof VerifyTenderIdRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  ApiAuthMeRoute: typeof ApiAuthMeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -331,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify/$tenderId': {
+      id: '/verify/$tenderId'
+      path: '/verify/$tenderId'
+      fullPath: '/verify/$tenderId'
+      preLoaderRoute: typeof VerifyTenderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vendor/withdraw': {
       id: '/vendor/withdraw'
       path: '/withdraw'
@@ -350,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/submit'
       fullPath: '/vendor/submit'
       preLoaderRoute: typeof VendorSubmitRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/reveal': {
+      id: '/vendor/reveal'
+      path: '/reveal'
+      fullPath: '/vendor/reveal'
+      preLoaderRoute: typeof VendorRevealRouteImport
       parentRoute: typeof VendorRoute
     }
     '/vendor/qa': {
@@ -443,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardComplianceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/me': {
+      id: '/api/auth/me'
+      path: '/api/auth/me'
+      fullPath: '/api/auth/me'
+      preLoaderRoute: typeof ApiAuthMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -450,6 +509,7 @@ interface VendorRouteChildren {
   VendorComplianceRoute: typeof VendorComplianceRoute
   VendorDocumentsRoute: typeof VendorDocumentsRoute
   VendorQaRoute: typeof VendorQaRoute
+  VendorRevealRoute: typeof VendorRevealRoute
   VendorSubmitRoute: typeof VendorSubmitRoute
   VendorTechnicalRoute: typeof VendorTechnicalRoute
   VendorWithdrawRoute: typeof VendorWithdrawRoute
@@ -460,6 +520,7 @@ const VendorRouteChildren: VendorRouteChildren = {
   VendorComplianceRoute: VendorComplianceRoute,
   VendorDocumentsRoute: VendorDocumentsRoute,
   VendorQaRoute: VendorQaRoute,
+  VendorRevealRoute: VendorRevealRoute,
   VendorSubmitRoute: VendorSubmitRoute,
   VendorTechnicalRoute: VendorTechnicalRoute,
   VendorWithdrawRoute: VendorWithdrawRoute,
@@ -483,7 +544,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRevealQueueRoute: DashboardRevealQueueRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardVendorsRoute: DashboardVendorsRoute,
+  VerifyTenderIdRoute: VerifyTenderIdRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  ApiAuthMeRoute: ApiAuthMeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

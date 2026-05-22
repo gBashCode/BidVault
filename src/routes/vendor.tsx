@@ -1,6 +1,7 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { VendorSidebar } from "@/components/vendor-sidebar";
+import axios from "axios";
 
 export const Route = createFileRoute("/vendor")({
   head: () => ({
@@ -9,6 +10,28 @@ export const Route = createFileRoute("/vendor")({
       { name: "description", content: "Submit a cryptographically sealed bid with verifiable hashing and HSM custody." },
     ],
   }),
+  beforeLoad: async ({ location }) => {
+    if (typeof window !== "undefined") {
+      try {
+        const res = await axios.get("/api/auth/me");
+        if (!res.data || res.data.role !== "VENDOR") {
+          throw redirect({
+            to: "/login" as any,
+            search: {
+              redirect: location.href,
+            } as any,
+          });
+        }
+      } catch {
+        throw redirect({
+          to: "/login" as any,
+          search: {
+            redirect: location.href,
+          } as any,
+        });
+      }
+    }
+  },
   component: VendorLayout,
 });
 

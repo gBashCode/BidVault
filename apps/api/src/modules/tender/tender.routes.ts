@@ -79,6 +79,18 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
     });
   });
 
+  // GET /v1/tenders
+  fastify.get('/v1/tenders', {
+    preHandler: fastify.authorize(['ORG_ADMIN', 'PROCUREMENT_MANAGER', 'AUDITOR', 'VENDOR']),
+  }, async (request, reply) => {
+    return await withRls(request.user, async (tx) => {
+      const tenders = await tx.tender.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      return reply.send(tenders);
+    });
+  });
+
   // GET /v1/tenders/:id
   fastify.get('/v1/tenders/:id', {
     preHandler: fastify.authorize(['ORG_ADMIN', 'PROCUREMENT_MANAGER', 'AUDITOR', 'VENDOR']),
@@ -100,6 +112,35 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
       if (tender.status !== 'REVEALED' && request.user.role !== 'PROCUREMENT_MANAGER' && request.user.role !== 'AUDITOR') {
         delete response.bids;
       }
+      return reply.send(response);
+    });
+  });
+
+  // GET /v1/tenders/:id/documents
+  fastify.get('/v1/tenders/:id/documents', {
+    preHandler: fastify.authorize(['ORG_ADMIN', 'PROCUREMENT_MANAGER', 'AUDITOR', 'VENDOR']),
+    schema: {
+      params: z.object({ id: z.string().cuid() }).strict(),
+    },
+  }, async (request, reply) => {
+    const { id: tenderId } = request.params as any;
+
+    return await withRls(request.user, async (tx) => {
+      const tender = await tx.tender.findUnique({ where: { id: tenderId } });
+      if (!tender) return reply.code(404).send({ message: 'Tender not found' });
+
+      const documents = await tx.tenderDocument.findMany({
+        where: { tenderId },
+      });
+
+      const response = documents.map((doc: any) => ({
+        id: doc.id,
+        tenderId: doc.tenderId,
+        filename: doc.filename,
+        fileSize: doc.fileSize,
+        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : doc.createdAt,
+      }));
+
       return reply.send(response);
     });
   });

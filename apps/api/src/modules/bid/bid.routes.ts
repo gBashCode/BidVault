@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { prisma, withRls } from '@sealedbid/db';
-import { SubmitBidBody, RevealBidBody, BidResponse } from './bid.schema.js';
+import { SubmitBidBody, RevealBidBody, BidResponse, ConfirmUploadBody, WithdrawBidBody } from './bid.schema.js';
 import { verifyCommitment, createCommitment, AuditChain } from '@sealedbid/crypto';
 import { z } from 'zod';
 import { queueWebhook } from '../webhooks/webhook.service.js';
@@ -15,7 +15,8 @@ function triggerSentryAlert(message: string, context: Record<string, any>) {
 
 export default async function bidRoutes(fastify: FastifyInstance) {
   // Rate limit plugin for submit endpoint (10 req/min per IP)
-  fastify.register(require('@fastify/rate-limit'), {
+  const rateLimit = await import('@fastify/rate-limit');
+  fastify.register(rateLimit.default ?? rateLimit, {
     max: 10,
     timeWindow: '1 minute',
     allowList: [],
@@ -251,7 +252,7 @@ export default async function bidRoutes(fastify: FastifyInstance) {
 
   // GET /v1/tenders/:id/bids
   fastify.get('/v1/tenders/:id/bids', {
-    preHandler: fastify.authorize(['PROCUREMENT_MANAGER', 'AUDITOR']),
+    preHandler: fastify.authorize(['PROCUREMENT_MANAGER', 'AUDITOR', 'VENDOR']),
     schema: {
       params: z.object({ id: z.string().cuid() }).strict(),
       response: { 200: z.array(BidResponse) },
@@ -280,6 +281,135 @@ export default async function bidRoutes(fastify: FastifyInstance) {
       });
 
       return reply.send(response);
+    });
+  });
+
+  // POST /v1/bids/:id/confirm-upload
+  // Called by frontend after S3 presigned upload completes. Records the etag + s3Key.
+  fastify.post('/v1/bids/:id/confirm-upload', {
+    preHandler: fastify.authorize(['VENDOR']),
+    schema: {
+      params: z.object({ id: z.string().cuid() }).strict(),
+      body: ConfirmUploadBody,
+    },
+  }, async (request, reply) => {
+    const { id: bidId } = request.params as any;
+    const { etag, s3Key } = request.body as any;
+
+    return await withRls(request.user, async (tx) => {
+      const bid = await tx.bid.findUnique({ where: { id: bidId } });
+      if (!bid) return reply.code(404).send({ message: 'Bid not found' });
+      if (bid.vendorId !== request.user.id) return reply.code(403).send({ message: 'Forbidden' });
+
+      const updated = await tx.bid.update({
+        where: { id: bidId },
+        data: {
+          encryptedBlob: s3Key,
+        },
+      });
+
+      // Audit log
+      const lastAudit = await tx.auditLog.findFirst({
+        where: { tenderId: bid.tenderId },
+        orderBy: { id: 'desc' },
+      });
+      const chain = new AuditChain(lastAudit?.eventHash);
+      const payload = { bidId, etag, s3Key, vendorId: request.user.id };
+      const { eventHash, prevHash } = chain.append('BID_UPLOAD_CONFIRMED', payload);
+
+      await tx.auditLog.create({
+        data: {
+          tenderId: bid.tenderId,
+          prevHash,
+          eventType: 'BID_UPLOAD_CONFIRMED',
+          actorId: request.user.id,
+          payload,
+          eventHash,
+        },
+      });
+
+      return reply.send({ id: updated.id, status: 'upload_confirmed' });
+    });
+  });
+
+  // PATCH /v1/bids/:id/withdraw
+  // Vendor can withdraw before submissionDeadline. Creates BidWithdrawal record.
+  fastify.patch('/v1/bids/:id/withdraw', {
+    preHandler: fastify.authorize(['VENDOR']),
+    schema: {
+      params: z.object({ id: z.string().cuid() }).strict(),
+      body: WithdrawBidBody,
+    },
+  }, async (request, reply) => {
+    const { id: bidId } = request.params as any;
+    const { reason } = request.body as any;
+
+    return await withRls(request.user, async (tx) => {
+      const bid = await tx.bid.findUnique({ where: { id: bidId } });
+      if (!bid) return reply.code(404).send({ message: 'Bid not found' });
+      if (bid.vendorId !== request.user.id) return reply.code(403).send({ message: 'Forbidden' });
+
+      const tender = await tx.tender.findUnique({ where: { id: bid.tenderId } });
+      if (!tender) return reply.code(404).send({ message: 'Related tender not found' });
+
+      // Can only withdraw before submissionDeadline
+      if (new Date() > tender.submissionDeadline) {
+        return reply.code(400).send({ message: 'Withdrawal deadline has passed' });
+      }
+
+      // Check if already withdrawn
+      const existing = await tx.bidWithdrawal.findUnique({ where: { bidId } });
+      if (existing) {
+        return reply.code(409).send({ message: 'Bid already withdrawn' });
+      }
+
+      const withdrawal = await tx.bidWithdrawal.create({
+        data: {
+          bidId,
+          reason: reason || null,
+        },
+      });
+
+      // Audit log
+      const lastAudit = await tx.auditLog.findFirst({
+        where: { tenderId: tender.id },
+        orderBy: { id: 'desc' },
+      });
+      const chain = new AuditChain(lastAudit?.eventHash);
+      const payload = {
+        bidId,
+        tenderId: tender.id,
+        vendorId: request.user.id,
+        reason: reason || null,
+      };
+      const { eventHash, prevHash } = chain.append('BID_WITHDRAWN', payload);
+
+      await tx.auditLog.create({
+        data: {
+          tenderId: tender.id,
+          prevHash,
+          eventType: 'BID_WITHDRAWN',
+          actorId: request.user.id,
+          payload,
+          eventHash,
+        },
+      });
+
+      // Trigger webhook
+      try {
+        await queueWebhook('bid.withdrawn', tender.id);
+      } catch (err) {
+        console.error('Failed to queue bid.withdrawn webhook:', err);
+      }
+
+      return reply.send({
+        id: withdrawal.id,
+        bidId: withdrawal.bidId,
+        reason: withdrawal.reason,
+        withdrawnAt: withdrawal.withdrawnAt instanceof Date
+          ? withdrawal.withdrawnAt.toISOString()
+          : withdrawal.withdrawnAt,
+      });
     });
   });
 }

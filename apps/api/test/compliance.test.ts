@@ -349,7 +349,10 @@ describe('SealedBid API - Enterprise Compliance & Webhook Layer', () => {
       const tenderId = 'ctndcompliance212345678901';
       await prisma.tender.update({
         where: { id: tenderId },
-        data: { status: 'OPEN' },
+        data: {
+          status: 'OPEN',
+          submissionDeadline: new Date(Date.now() + 100000),
+        },
       });
 
       // Submit bid
@@ -358,7 +361,7 @@ describe('SealedBid API - Enterprise Compliance & Webhook Layer', () => {
         .set('Authorization', `Bearer ${vendorToken}`)
         .send({
           commitment: '0x3333333333333333333333333333333333333333333333333333333333333333',
-          saltHash: '0x9abc',
+          saltHash: '0x9abc' + '0'.repeat(60),
         });
 
       expect(submitBidRes.status).toBe(201);

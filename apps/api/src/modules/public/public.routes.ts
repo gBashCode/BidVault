@@ -8,7 +8,8 @@ import { PublicTenderProofSchema } from './public.schema.js';
 
 export default async function publicRoutes(fastify: FastifyInstance) {
   // Rate limit plugin for public endpoints (100 req/min per IP)
-  fastify.register(require('@fastify/rate-limit'), {
+  const rateLimit = await import('@fastify/rate-limit');
+  fastify.register(rateLimit.default ?? rateLimit, {
     max: 100,
     timeWindow: '1 minute',
     allowList: [],
@@ -78,6 +79,33 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     // Cache: 60s, this data is immutable after reveal
     reply.header('Cache-Control', 'public, max-age=60');
 
+    return reply.send(response);
+  });
+
+  // GET /v1/public/tenders
+  // Public overview of revealed tenders (no auth required). 30s cache.
+  fastify.get('/v1/public/tenders', async (request, reply) => {
+    // Only show REVEALED or AWARDED tenders
+    const tenders = await prisma.tender.findMany({
+      where: { status: 'REVEALED' },
+    });
+
+    // Also add AWARDED tenders
+    const awardedTenders = await prisma.tender.findMany({
+      where: { status: 'AWARDED' },
+    });
+
+    const allTenders = [...tenders, ...awardedTenders];
+
+    const response = allTenders.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      revealTime: t.revealTime instanceof Date ? t.revealTime.toISOString() : t.revealTime,
+      bidCount: Array.isArray(t.bids) ? t.bids.length : undefined,
+    }));
+
+    reply.header('Cache-Control', 'public, max-age=30');
     return reply.send(response);
   });
 }

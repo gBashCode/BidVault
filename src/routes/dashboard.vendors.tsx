@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { useOrg } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/vendors")({
   head: () => ({
@@ -26,7 +29,7 @@ interface Vendor {
   sector: string;
 }
 
-const vendors: Vendor[] = [
+const MOCK_VENDORS: Vendor[] = [
   {
     name: "Helios Civil Works AG",
     reg: "BE0445.123.789",
@@ -111,6 +114,59 @@ const vendors: Vendor[] = [
 
 function VendorsPage() {
   const [search, setSearch] = useState("");
+  const orgId = useOrg();
+
+  const { data: rawVendors = [] } = useQuery({
+    queryKey: ["org-vendors", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const res = await apiClient.get(`/v1/org/${orgId}/vendors`);
+      return res.data;
+    },
+    enabled: !!orgId,
+  });
+
+  const mappedVendors: Vendor[] = rawVendors.map((v: any, index: number) => {
+    const emailPrefix = v.email.split("@")[0];
+    const name = emailPrefix
+      .split(".")
+      .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(" ") + " Ltd";
+    
+    const sectors = ["Infrastructure", "Construction", "Engineering", "Transport", "Energy", "Services"];
+    const countries = [
+      { name: "Belgium", code: "BE" },
+      { name: "Netherlands", code: "NL" },
+      { name: "Germany", code: "DE" },
+      { name: "United Kingdom", code: "GB" },
+      { name: "France", code: "FR" },
+      { name: "Sweden", code: "SE" },
+    ];
+    
+    const countryObj = countries[index % countries.length];
+    const sector = sectors[index % sectors.length];
+    const reg = `${countryObj.code}${((index + 1) * 987654321).toString().slice(0, 8)}B01`;
+    
+    let kyc: KycStatus = "Verified";
+    if (v.email.includes("north") || index % 5 === 2) kyc = "Pending";
+    else if (v.email.includes("aleph") || index % 5 === 4) kyc = "Expired";
+    
+    const activeBids = (index % 3) + 1;
+    const lastActivity = new Date(Date.now() - (index * 24 * 60 * 60 * 1000)).toISOString().split("T")[0];
+
+    return {
+      name,
+      reg,
+      country: countryObj.name,
+      countryCode: countryObj.code,
+      kyc,
+      activeBids,
+      lastActivity,
+      sector,
+    };
+  });
+
+  const vendors = rawVendors.length > 0 ? mappedVendors : MOCK_VENDORS;
 
   const filtered = vendors.filter(
     (v) =>

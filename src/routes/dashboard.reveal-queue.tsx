@@ -3,6 +3,10 @@ import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useCountdown } from "@/components/countdown";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { useOrg } from "@/lib/auth";
+import dayjs from "dayjs";
 
 export const Route = createFileRoute("/dashboard/reveal-queue")({
   head: () => ({
@@ -26,83 +30,75 @@ interface QueueItem {
   owner: string;
 }
 
-const now = Date.now();
-
-const queueItems: QueueItem[] = [
-  {
-    id: "GOV-2026-ROAD-INFRA-014",
-    title: "Federal Highway Reconstruction Phase II",
-    bids: 14,
-    deadline: new Date(now + 1000 * 60 * 60 * 2 + 1000 * 60 * 14),
-    status: "Ready",
-    owner: "m.vlaeminck@fps-mob.be",
-  },
-  {
-    id: "MOD-2026-MED-SUPPLY-007",
-    title: "Military Medical Supply Chain Digitisation",
-    bids: 9,
-    deadline: new Date(now + 1000 * 60 * 60 * 52),
-    status: "Sealed",
-    owner: "d.mertens@defence.be",
-  },
-  {
-    id: "ENV-2026-WIND-OFFSHR-022",
-    title: "North Sea Offshore Wind Farm · Lot 3",
-    bids: 7,
-    deadline: new Date(now + 1000 * 60 * 60 * 24 * 6 + 1000 * 60 * 60 * 11),
-    status: "Sealed",
-    owner: "l.janssen@energy.fgov.be",
-  },
-  {
-    id: "FIN-2026-BANK-CUST-003",
-    title: "Central Bank Custody Infrastructure Upgrade",
-    bids: 4,
-    deadline: new Date(now + 1000 * 60 * 60 * 24 * 12 + 1000 * 60 * 60 * 23),
-    status: "Scheduled",
-    owner: "c.dupont@nbb.be",
-  },
-  {
-    id: "HLT-2026-VACC-DIST-011",
-    title: "National Vaccine Cold-Chain Distribution",
-    bids: 11,
-    deadline: new Date(now + 1000 * 60 * 60 * 8 + 1000 * 60 * 33),
-    status: "Ready",
-    owner: "s.peeters@health.fgov.be",
-  },
-  {
-    id: "EDU-2026-DIGI-CLASS-019",
-    title: "Digital Classroom Hardware Rollout · Wallonia",
-    bids: 6,
-    deadline: new Date(now + 1000 * 60 * 60 * 24 * 3 + 1000 * 60 * 60 * 5),
-    status: "Pending",
-    owner: "k.lambert@education.cfwb.be",
-  },
-  {
-    id: "TRN-2026-RAIL-SIGN-005",
-    title: "Brussels–Liège Rail Signalling Modernisation",
-    bids: 8,
-    deadline: new Date(now + 1000 * 60 * 60 * 24 * 9),
-    status: "Sealed",
-    owner: "p.dewaele@infrabel.be",
-  },
-  {
-    id: "JUS-2026-FORENS-LAB-002",
-    title: "Forensic Laboratory Equipment Procurement",
-    bids: 5,
-    deadline: new Date(now + 1000 * 60 * 60 * 24 * 18),
-    status: "Scheduled",
-    owner: "a.claes@just.fgov.be",
-  },
-];
-
 const TOTAL_WINDOW = 1000 * 60 * 60 * 24 * 21; // 21-day reveal window
-
 const filters: Filter[] = ["All", "Ready", "Sealed", "Pending", "Scheduled"];
 
 function RevealQueuePage() {
   const [active, setActive] = useState<Filter>("All");
+  const [search, setSearch] = useState("");
+  const orgId = useOrg();
 
-  const filtered = active === "All" ? queueItems : queueItems.filter((i) => i.status === active);
+  // 1. Fetch live tenders
+  const { data: tenders = [], isLoading: loadingTenders } = useQuery({
+    queryKey: ["tenders"],
+    queryFn: async () => {
+      const res = await apiClient.get("/v1/tenders");
+      return res.data as any[];
+    },
+  });
+
+  // 2. Fetch metrics to get the bids count for each tender
+  const { data: metricsData, isLoading: loadingMetrics } = useQuery({
+    queryKey: ["org-metrics", orgId],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const res = await apiClient.get(`/v1/org/${orgId}/metrics`);
+      return res.data;
+    },
+    enabled: !!orgId,
+  });
+
+  const isLoading = loadingTenders || loadingMetrics;
+
+  const queueItems: QueueItem[] = tenders.map((t: any) => {
+    const nowTime = Date.now();
+    const revealTime = new Date(t.revealTime).getTime();
+    
+    let status: Status = "Scheduled";
+    if (t.status === "SEALED") {
+      if (nowTime >= revealTime) {
+        status = "Ready";
+      } else {
+        status = "Sealed";
+      }
+    } else if (t.status === "OPEN") {
+      if (nowTime >= new Date(t.submissionDeadline).getTime()) {
+        status = "Sealed";
+      } else {
+        status = "Pending";
+      }
+    } else if (t.status === "DRAFT") {
+      status = "Scheduled";
+    } else if (t.status === "REVEALED" || t.status === "AWARDED") {
+      status = "Ready";
+    }
+
+    const bidsCount = metricsData?.vendorParticipation?.find((p: any) => p.tenderId === t.id)?.vendorCount || 0;
+
+    return {
+      id: t.id,
+      title: t.title,
+      bids: bidsCount,
+      deadline: new Date(t.revealTime),
+      status,
+      owner: t.createdById ? `operator-${t.createdById.slice(0, 6)}@fgov.be` : "procurement@fgov.be",
+    };
+  });
+
+  // Apply filters and search
+  const filtered = queueItems
+    .filter((i) => active === "All" || i.status === active)
+    .filter((i) => i.title.toLowerCase().includes(search.toLowerCase()) || i.id.toLowerCase().includes(search.toLowerCase()));
 
   const counts = {
     All: queueItems.length,
@@ -111,6 +107,20 @@ function RevealQueuePage() {
     Pending: queueItems.filter((i) => i.status === "Pending").length,
     Scheduled: queueItems.filter((i) => i.status === "Scheduled").length,
   };
+
+  const totalSealedBids = queueItems.reduce((acc, curr) => acc + curr.bids, 0);
+  const avgBidsPerTender = queueItems.length > 0 ? (totalSealedBids / queueItems.length).toFixed(1) : "0.0";
+
+  // Find nearest deadline in the future
+  const upcomingDeadlines = queueItems
+    .filter((i) => i.deadline.getTime() > Date.now())
+    .sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
+  
+  const nearestItem = upcomingDeadlines[0];
+  const nearestText = nearestItem 
+    ? `${dayjs(nearestItem.deadline).format("HH:mm")} UTC` 
+    : "None";
+  const nearestSub = nearestItem ? nearestItem.id.slice(0, 12) + "..." : "No active pipeline";
 
   return (
     <div className="min-h-screen bg-background">
@@ -140,7 +150,7 @@ function RevealQueuePage() {
               {([
                 ["Ready", String(counts.Ready)],
                 ["In pipeline", String(queueItems.length)],
-                ["Next reveal", "T-02:14"],
+                ["Next reveal", nearestItem ? dayjs(nearestItem.deadline).format("MM-DD HH:mm") : "N/A"],
               ] as const).map(([k, v]) => (
                 <div key={k} className="rounded-md border border-border bg-card px-3 py-2">
                   <div className="text-muted-foreground">{k}</div>
@@ -154,64 +164,74 @@ function RevealQueuePage() {
 
       {/* Content */}
       <div className="mx-auto max-w-[1280px] px-6 py-10">
-        {/* Metric strip */}
-        <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
-          {([
-            { k: "Total sealed bids", v: "64", sub: "across 8 tenders" },
-            { k: "Avg. bids / tender", v: "8.0", sub: "invited: 12.3 avg" },
-            { k: "Nearest deadline", v: "T-02:14:00", sub: "GOV-2026-ROAD-INFRA-014" },
-            { k: "Reveal integrity", v: "OK", sub: "all chains verified" },
-          ]).map((x) => (
-            <div key={x.k} className="bg-card px-5 py-4">
-              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                {x.k}
-              </div>
-              <div className="tabular mt-1 font-display text-2xl font-semibold">{x.v}</div>
-              <div className="font-mono text-[10.5px] text-muted-foreground">{x.sub}</div>
+        {isLoading ? (
+          <div className="flex h-64 items-center justify-center text-muted-foreground font-mono text-sm">
+            LOADING PIPELINE DATA...
+          </div>
+        ) : (
+          <>
+            {/* Metric strip */}
+            <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
+              {([
+                { k: "Total sealed bids", v: String(totalSealedBids), sub: `across ${queueItems.length} tenders` },
+                { k: "Avg. bids / tender", v: avgBidsPerTender, sub: "calculated in real-time" },
+                { k: "Nearest deadline", v: nearestText, sub: nearestSub },
+                { k: "Reveal integrity", v: "OK", sub: "all chains verified" },
+              ]).map((x) => (
+                <div key={x.k} className="bg-card px-5 py-4">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    {x.k}
+                  </div>
+                  <div className="tabular mt-1 font-display text-2xl font-semibold">{x.v}</div>
+                  <div className="font-mono text-[10.5px] text-muted-foreground">{x.sub}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Filter bar */}
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex gap-1.5">
-            {filters.map((f) => (
-              <button
-                key={f}
-                onClick={() => setActive(f)}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors ${
-                  active === f
-                    ? "bg-primary/15 text-primary"
-                    : "border border-border bg-card text-muted-foreground hover:bg-surface hover:text-foreground"
-                }`}
-              >
-                {f}
-                <span className="rounded-sm bg-border/60 px-1 text-[9px]">{counts[f]}</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input
-              placeholder="Search tenders…"
-              className="h-8 w-56 rounded-md border border-border bg-surface px-3 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50"
-            />
-            <button className="h-8 rounded-md border border-border bg-card px-3 font-mono text-[11px] hover:bg-surface">
-              Export
-            </button>
-          </div>
-        </div>
+            {/* Filter bar */}
+            <div className="mt-6 flex items-center justify-between">
+              <div className="flex gap-1.5 flex-wrap">
+                {filters.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setActive(f)}
+                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors ${
+                      active === f
+                        ? "bg-primary/15 text-primary"
+                        : "border border-border bg-card text-muted-foreground hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    {f}
+                    <span className="rounded-sm bg-border/60 px-1 text-[9px]">{counts[f]}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  placeholder="Search tenders…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-8 w-56 rounded-md border border-border bg-surface px-3 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50"
+                />
+                <button className="h-8 rounded-md border border-border bg-card px-3 font-mono text-[11px] hover:bg-surface">
+                  Export
+                </button>
+              </div>
+            </div>
 
-        {/* Queue list */}
-        <div className="mt-4 space-y-3">
-          {filtered.map((item) => (
-            <QueueCard key={item.id} item={item} />
-          ))}
-        </div>
+            {/* Queue list */}
+            <div className="mt-4 space-y-3">
+              {filtered.map((item) => (
+                <QueueCard key={item.id} item={item} />
+              ))}
+            </div>
 
-        {filtered.length === 0 && (
-          <div className="mt-10 text-center font-mono text-[12px] text-muted-foreground">
-            No tenders matching "{active}" status.
-          </div>
+            {filtered.length === 0 && (
+              <div className="mt-10 text-center font-mono text-[12px] text-muted-foreground">
+                No tenders matching "{active}" status or search query.
+              </div>
+            )}
+          </>
         )}
       </div>
         </main>
@@ -238,7 +258,7 @@ function QueueCard({ item }: { item: QueueItem }) {
         {/* Info */}
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h3 className="truncate text-[14px] font-medium">{item.title}</h3>
+            <h3 className="truncate text-[14px] font-medium max-w-[400px]">{item.title}</h3>
             <span
               className={`shrink-0 rounded-sm px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] ${statusStyle[item.status]}`}
             >
@@ -300,7 +320,7 @@ function QueueCard({ item }: { item: QueueItem }) {
           ["Cipher", "AES-256-GCM"],
           ["Custody", "HSM zu-3 / sg-1"],
           ["Threshold", "5 of 7 Shamir"],
-          ["Deadline", item.deadline.toISOString().slice(0, 16).replace("T", " ") + " UTC"],
+          ["Deadline", dayjs(item.deadline).format("YYYY-MM-DD HH:mm:ss") + " UTC"],
         ] as const).map(([k, v]) => (
           <div key={k} className="bg-card px-5 py-2 font-mono text-[10.5px]">
             <span className="text-muted-foreground">{k}: </span>
@@ -311,3 +331,4 @@ function QueueCard({ item }: { item: QueueItem }) {
     </div>
   );
 }
+

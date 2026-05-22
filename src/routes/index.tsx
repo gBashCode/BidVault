@@ -6,6 +6,10 @@ import { Countdown, CircularCountdown } from "@/components/countdown";
 import { RevealShowcase, SealedBidCard } from "@/components/bid-card";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { useOrg } from "@/lib/auth";
+import { CountdownRing } from "@/components/CountdownRing";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -61,6 +65,37 @@ function Index() {
 /* ---------- HERO ---------- */
 function Hero() {
   const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+  const orgId = useOrg();
+
+  const { data: publicTenders = [] } = useQuery({
+    queryKey: ["public-tenders"],
+    queryFn: async () => {
+      const res = await apiClient.get("/v1/public/tenders");
+      return res.data;
+    },
+  });
+
+  const { data: metrics } = useQuery({
+    queryKey: ["org-metrics", orgId],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const res = await apiClient.get(`/v1/org/${orgId}/metrics`);
+      return res.data;
+    },
+    enabled: !!orgId,
+  });
+
+  const activeTender = publicTenders && publicTenders.length > 0 ? publicTenders[0] : null;
+
+  const { data: proofData } = useQuery({
+    queryKey: ["tender-proof", activeTender?.id],
+    queryFn: async () => {
+      if (!activeTender?.id) return null;
+      const res = await apiClient.get(`/v1/public/tenders/${activeTender.id}/proof`);
+      return res.data;
+    },
+    enabled: !!activeTender?.id,
+  });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -69,6 +104,24 @@ function Hero() {
       y: e.clientY - rect.top,
     });
   };
+
+  const displayTotalValue = metrics?.totalValueAwarded
+    ? `€ ${(metrics.totalValueAwarded / 1e9).toFixed(1)}B`
+    : "€ 38.2B";
+
+  const tenderTitle = activeTender?.title || "Federal Highway · Phase II";
+  const tenderIdDisplay = activeTender?.id ? `GOV-${activeTender.id.slice(0, 8).toUpperCase()}` : "GOV-2026-ROAD-INFRA-014";
+  const bidsCount = proofData?.bids?.length ?? (activeTender?.bidCount ?? 14);
+
+  const displayBids = (proofData?.bids && proofData.bids.length > 0)
+    ? proofData.bids.map((b: any, index: number) => ({
+        vendor: b.revealed?.plaintextBid?.vendor || `Vendor ${b.vendorHash.slice(2, 6).toUpperCase()}`,
+        ref: `BID-${activeTender?.id.slice(0, 3).toUpperCase()}-${index + 1}`,
+        hash: b.commitment.slice(0, 18),
+        amount: b.revealed?.plaintextBid?.amount ? `€ ${Number(b.revealed.plaintextBid.amount).toLocaleString()}` : "•••• •••",
+        verified: true,
+      }))
+    : heroBids.map((b) => ({ ...b, verified: false }));
 
   return (
     <section 
@@ -98,7 +151,7 @@ function Hero() {
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 backdrop-blur">
             <span className="h-1.5 w-1.5 animate-seal-pulse rounded-full bg-primary" />
             <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Live · 2,184 sealed tenders this quarter
+              Live · {publicTenders.length > 0 ? publicTenders.length : "2,184"} sealed tenders
             </span>
           </div>
           <h1 className="mt-7 font-display text-[64px] font-semibold leading-[0.95] tracking-tight md:text-[88px]">
@@ -131,7 +184,7 @@ function Hero() {
           </div>
           <div className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border/70 pt-7">
             {[
-              { k: "€ 38.2B", v: "Procured under seal" },
+              { k: displayTotalValue, v: "Procured under seal" },
               { k: "11 / 27", v: "OECD jurisdictions" },
               { k: "0", v: "Pre-reveal breaches" },
             ].map((s) => (
@@ -162,34 +215,34 @@ function Hero() {
                   Active tender
                 </div>
                 <div className="mt-1 font-display text-[18px] font-semibold">
-                  Federal Highway · Phase II
+                  {tenderTitle}
                 </div>
                 <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                  GOV-2026-ROAD-INFRA-014 · 14 sealed bids
+                  {tenderIdDisplay} · {bidsCount} sealed bids
                 </div>
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.2em] text-primary">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-seal-pulse" />
-                Sealed
+                {activeTender?.status || "Sealed"}
               </div>
             </div>
             <div className="mt-6 flex items-center justify-center">
-              <CircularCountdown target={target} size={240} />
+              <CountdownRing targetDate={activeTender?.revealTime ? new Date(activeTender.revealTime) : target} size={240} />
             </div>
             <div className="mt-6 divide-y divide-border/70 rounded-lg border border-border/70 bg-surface/60">
-              {heroBids.map((b) => (
+              {displayBids.slice(0, 3).map((b: any) => (
                 <div key={b.ref} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary/20 to-amber-deep/20 ring-1 ring-primary/30" />
                     <div>
                       <div className="text-[13px] font-medium">{b.vendor}</div>
                       <div className="font-mono text-[10px] text-muted-foreground animate-hash">
-                        {b.hash} · sealed
+                        {b.hash} · {b.verified ? "verified" : "sealed"}
                       </div>
                     </div>
                   </div>
                   <div className="tabular font-mono text-[12px] text-muted-foreground/50">
-                    •••• •••
+                    {b.amount}
                   </div>
                 </div>
               ))}

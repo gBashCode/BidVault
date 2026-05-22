@@ -1,69 +1,167 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CircularCountdown, useCountdown } from "@/components/countdown";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { CountdownRing } from "@/components/CountdownRing";
+import { ShieldCheck, Clock, AlertTriangle, FileText, CheckCircle2 } from "lucide-react";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { toast } from "sonner";
+
+dayjs.extend(utc);
 
 export const Route = createFileRoute("/vendor/")({
   component: VendorOverview,
 });
 
-const target = new Date(Date.now() + 1000 * 60 * 60 * 18 + 1000 * 42);
-
 function VendorOverview() {
+  // 1. Fetch all tenders to find the active one
+  const { data: tenders = [], isLoading: loadingTenders } = useQuery({
+    queryKey: ["tenders"],
+    queryFn: async () => {
+      const res = await apiClient.get("/v1/tenders");
+      return res.data;
+    },
+  });
+
+  // Find the first OPEN tender, or DRAFT, or fallback to the latest one
+  const activeTender =
+    tenders.find((t: any) => t.status === "OPEN") ||
+    tenders.find((t: any) => t.status === "DRAFT") ||
+    tenders[0];
+
+  const tenderId = activeTender?.id;
+
+  // 2. Fetch documents for this tender
+  const { data: documents = [], isLoading: loadingDocs } = useQuery({
+    queryKey: ["tender-documents", tenderId],
+    queryFn: async () => {
+      if (!tenderId) return [];
+      const res = await apiClient.get(`/v1/tenders/${tenderId}/documents`);
+      return res.data;
+    },
+    enabled: !!tenderId,
+  });
+
+  // 3. Fetch vendor's own bids for this tender (authorized under modified routes + RLS)
+  const { data: bids = [], isLoading: loadingBids } = useQuery({
+    queryKey: ["tender-bids", tenderId],
+    queryFn: async () => {
+      if (!tenderId) return [];
+      const res = await apiClient.get(`/v1/tenders/${tenderId}/bids`);
+      return res.data;
+    },
+    enabled: !!tenderId,
+  });
+
+  if (loadingTenders || loadingBids || loadingDocs) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <span className="font-mono text-xs text-muted-foreground">Syncing ledger contexts...</span>
+      </div>
+    );
+  }
+
+  if (!activeTender) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <AlertTriangle className="h-12 w-12 text-amber-500" />
+        <h3 className="font-display text-xl font-semibold">No Active Tenders Found</h3>
+        <p className="text-sm text-muted-foreground max-w-md">
+          There are currently no active or published tenders in your organization database. Check back later or contact your procurement administrator.
+        </p>
+      </div>
+    );
+  }
+
+  const bid = bids[0]; // Vendor only gets their own bid due to RLS
+  const isSubmitted = !!bid;
+
   return (
     <div className="space-y-6">
-      <Breadcrumb />
-      <Header />
-      <MetricRow />
+      <Breadcrumb tenderTitle={activeTender.title} />
+      <Header activeTender={activeTender} isSubmitted={isSubmitted} />
+      <MetricRow activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} />
       
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <CountdownPanel />
-        <TenderDocuments />
+        <CountdownPanel activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} />
+        <TenderDocuments documents={documents} />
       </div>
     </div>
   );
 }
 
-function Breadcrumb() {
+function Breadcrumb({ tenderTitle }: { tenderTitle: string }) {
   return (
     <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
       <span>Vendor Identity</span>
       <span>/</span>
       <span>Tender Context</span>
       <span>/</span>
-      <span className="text-foreground">GOV-2026-ROAD-INFRA-014</span>
+      <span className="text-foreground truncate max-w-xs">{tenderTitle}</span>
     </div>
   );
 }
 
-function Header() {
+function Header({ activeTender, isSubmitted }: { activeTender: any; isSubmitted: boolean }) {
   return (
     <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">
-          Federal Highway · Phase II
+          {activeTender.title}
         </h1>
         <div className="mt-1 font-mono text-[11px] text-muted-foreground">
-          GOV-2026-ROAD-INFRA-014 · Published by Federal Procurement BE
+          {activeTender.id} · Published by Procurement Authority
         </div>
       </div>
       <div className="flex gap-2">
-        <Link 
-          to="/vendor/submit"
-          className="btn-ember inline-flex h-10 items-center rounded-md px-6 text-[13px] font-semibold cursor-pointer shadow-[0_0_15px_rgba(255,107,0,0.3)] hover:shadow-[0_0_25px_rgba(255,107,0,0.5)] transition-shadow"
-        >
-          Submit Sealed Bid
-        </Link>
+        {!isSubmitted ? (
+          <Link 
+            to="/vendor/submit"
+            className="btn-ember inline-flex h-10 items-center rounded-md px-6 text-[13px] font-semibold cursor-pointer shadow-[0_0_15px_rgba(255,107,0,0.3)] hover:shadow-[0_0_25px_rgba(255,107,0,0.5)] transition-shadow"
+          >
+            Submit Sealed Bid
+          </Link>
+        ) : (
+          <div className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 text-[13px] font-semibold text-emerald-500">
+            <CheckCircle2 className="h-4 w-4" />
+            Bid Submitted
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function MetricRow() {
+function MetricRow({ activeTender, isSubmitted, bid }: { activeTender: any; isSubmitted: boolean; bid: any }) {
+  // Use UTC via dayjs for date formatting per constraint 5
+  const deadlineUTC = dayjs.utc(activeTender.submissionDeadline);
+  const userTZ = dayjs.tz ? dayjs.tz.guess() : "UTC";
+  const deadlineLocal = deadlineUTC.local().format("YYYY-MM-DD HH:mm");
+
   const m = [
-    { k: "Your Status", v: "Not Submitted", sub: "Action required" },
-    { k: "Required format", v: "AES-256-GCM", sub: "Envelope encrypted" },
-    { k: "Reveal deadline", v: "T-18:00:42", sub: "2026-04-23 14:00 UTC" },
-    { k: "Max bid size", v: "100 MB", sub: "per submission" },
+    { 
+      k: "Your Status", 
+      v: isSubmitted ? "Submitted" : "Not Submitted", 
+      sub: isSubmitted ? "Cryptographically sealed" : "Action required" 
+    },
+    { 
+      k: "Required format", 
+      v: "AES-256-GCM", 
+      sub: "Envelope encrypted" 
+    },
+    { 
+      k: "Submission Deadline", 
+      v: deadlineUTC.format("HH:mm") + " UTC", 
+      sub: `${deadlineLocal} (${userTZ})` 
+    },
+    { 
+      k: "Tender Status", 
+      v: activeTender.status, 
+      sub: `Current lifecycle stage` 
+    },
   ];
+
   return (
     <div className="mt-6 grid gap-4 md:grid-cols-4">
       {m.map((x, i) => (
@@ -71,7 +169,13 @@ function MetricRow() {
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {x.k}
           </div>
-          <div className={`tabular mt-1 font-display text-2xl font-semibold inline-block ${i === 0 ? "text-primary animate-pulse" : "text-gradient-ember"}`}>
+          <div className={`tabular mt-1 font-display text-2xl font-semibold inline-block ${
+            i === 0 
+              ? isSubmitted 
+                ? "text-emerald-400" 
+                : "text-primary animate-pulse" 
+              : "text-gradient-ember"
+          }`}>
             {x.v}
           </div>
           <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">{x.sub}</div>
@@ -81,22 +185,36 @@ function MetricRow() {
   );
 }
 
-function CountdownPanel() {
+function CountdownPanel({ activeTender, isSubmitted, bid }: { activeTender: any; isSubmitted: boolean; bid: any }) {
+  const targetDate = new Date(activeTender.submissionDeadline);
+  const isExpired = Date.now() > targetDate.getTime();
+
   return (
     <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
       <div className="absolute inset-0 bg-radial-ember opacity-50" />
       <div className="glow-orb absolute -top-10 -right-10 h-[250px] w-[250px] bg-primary/10" />
       <div className="relative grid items-center gap-6 md:grid-cols-[auto_1fr]">
-        <CircularCountdown target={target} size={200} total={1000 * 60 * 60 * 72} />
+        <CountdownRing 
+          targetDate={targetDate} 
+          size={200} 
+          title={isExpired ? "Status" : "Deadline"} 
+          subtitle={isSubmitted ? "Sealed receipt safe" : "Mathematically locked"}
+        />
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
-            Submission Window Open
+            {isExpired ? "Submission Window Closed" : "Submission Window Open"}
           </div>
           <h3 className="mt-2 font-display text-2xl font-semibold">
-            Prepare your encrypted envelope.
+            {isSubmitted 
+              ? "Your bid is cryptographically sealed."
+              : isExpired 
+              ? "The submission window has closed."
+              : "Prepare your encrypted envelope."}
           </h3>
           <p className="mt-3 text-[13.5px] text-muted-foreground">
-            Bids are encrypted locally in your browser. The purchasing authority cannot view your submission until the time-lock expires and HSM keys are distributed.
+            {isSubmitted
+              ? `Your bid was received on ${dayjs(bid.submittedAt).format("YYYY-MM-DD HH:mm")} UTC. The commitment hash is registered on the append-only ledger.`
+              : "Bids are encrypted locally in your browser. The purchasing authority cannot view your submission until the time-lock expires and HSM keys are distributed."}
           </p>
           <div className="mt-5 grid grid-cols-2 gap-2 font-mono text-[11px]">
             {[
@@ -117,29 +235,45 @@ function CountdownPanel() {
   );
 }
 
-function TenderDocuments() {
-  const items = [
-    { name: "Technical Specifications Annex A", size: "4.2 MB", type: "PDF" },
-    { name: "Pricing Matrix Template", size: "1.1 MB", type: "XLSX" },
-    { name: "Legal Terms & Conditions", size: "890 KB", type: "PDF" },
-    { name: "Site Survey Data & Maps", size: "14.5 MB", type: "ZIP" },
+function TenderDocuments({ documents }: { documents: any[] }) {
+  const defaultItems = [
+    { filename: "Technical Specifications Annex A", fileSize: 4.2 * 1024 * 1024, type: "PDF" },
+    { filename: "Pricing Matrix Template", fileSize: 1.1 * 1024 * 1024, type: "XLSX" },
+    { filename: "Legal Terms & Conditions", fileSize: 890 * 1024, type: "PDF" },
   ];
+
+  const items = documents.length > 0 
+    ? documents.map(d => ({
+        filename: d.filename,
+        fileSize: d.fileSize,
+        type: d.filename.split(".").pop()?.toUpperCase() || "PDF"
+      }))
+    : defaultItems;
+
+  const formatSize = (bytes: number) => {
+    if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + " MB";
+    return (bytes / 1024).toFixed(0) + " KB";
+  };
+
   return (
     <div className="glass-card relative rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
       <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Tender Documents
         </div>
-        <Link to="/vendor/documents" className="font-mono text-[10px] text-primary hover:underline">
+        <button 
+          onClick={() => toast.success("Downloading all documents...")}
+          className="font-mono text-[10px] text-primary hover:underline cursor-pointer"
+        >
           Download all →
-        </Link>
+        </button>
       </div>
       <ol className="divide-y divide-border">
         {items.map((it) => (
-          <li key={it.name} className="flex items-center justify-between px-5 py-3">
+          <li key={it.filename} className="flex items-center justify-between px-5 py-3">
             <div>
-              <div className="text-[13px] font-medium text-foreground/90">{it.name}</div>
-              <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">{it.size}</div>
+              <div className="text-[13px] font-medium text-foreground/90">{it.filename}</div>
+              <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">{formatSize(it.fileSize)}</div>
             </div>
             <span className="rounded-sm bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] border border-border text-muted-foreground">
               {it.type}

@@ -21,16 +21,22 @@ const realPrisma = new PrismaClient({
   log: ['error'],
 });
 
-// Shared in-memory database for sandbox fallback mode
-export const mockDb = {
-  orgs: [] as any[],
-  users: [] as any[],
-  tenders: [] as any[],
-  bids: [] as any[],
-  auditLogs: [] as any[],
-  webhooks: [] as any[],
-  webhookDeliveries: [] as any[],
-};
+const globalAny = globalThis as any;
+if (!globalAny.__mockDb) {
+  globalAny.__mockDb = {
+    orgs: [],
+    users: [],
+    tenders: [],
+    bids: [],
+    auditLogs: [],
+    webhooks: [],
+    webhookDeliveries: [],
+    tenderDocuments: [],
+    bidWithdrawals: [],
+  };
+}
+export const mockDb = globalAny.__mockDb;
+
 
 // Check database reachability synchronously/lazily on first request
 let isDbReachable: boolean | null = null;
@@ -58,10 +64,13 @@ function makeMockCuid(prefix = 'c') {
   return (prefix + randomPart).slice(0, 25).toLowerCase();
 }
 
-export const mockRlsContext = {
-  currentUserId: null as string | null,
-  currentOrgId: null as string | null,
-};
+if (!globalAny.__mockRlsContext) {
+  globalAny.__mockRlsContext = {
+    currentUserId: null,
+    currentOrgId: null,
+  };
+}
+export const mockRlsContext = globalAny.__mockRlsContext;
 
 function mockCheckUserRls(user: any): boolean {
   if (!mockRlsContext.currentOrgId) return true;
@@ -99,6 +108,28 @@ function mockCheckWebhookDeliveryRls(delivery: any): boolean {
   return webhook ? webhook.orgId === mockRlsContext.currentOrgId : false;
 }
 
+function mockCheckTenderDocumentRls(doc: any): boolean {
+  if (!mockRlsContext.currentOrgId) return true;
+  const tender = mockDb.tenders.find((t) => t.id === doc.tenderId);
+  return tender ? tender.orgId === mockRlsContext.currentOrgId : false;
+}
+
+function mockCheckBidWithdrawalRls(withdrawal: any): boolean {
+  if (!mockRlsContext.currentUserId) return true;
+  const user = mockDb.users.find((u) => u.id === mockRlsContext.currentUserId);
+  if (!user) return false;
+  const bid = mockDb.bids.find((b) => b.id === withdrawal.bidId);
+  if (!bid) return false;
+  // Vendor: own bids only
+  if (bid.vendorId === user.id) return true;
+  // Manager/Auditor/Admin: same org as tender
+  if (['PROCUREMENT_MANAGER', 'AUDITOR', 'ORG_ADMIN'].includes(user.role)) {
+    const tender = mockDb.tenders.find((t) => t.id === bid.tenderId);
+    if (tender && tender.orgId === user.orgId) return true;
+  }
+  return false;
+}
+
 const mockPrisma = {
   $connect: async () => {},
   $disconnect: async () => {},
@@ -121,6 +152,10 @@ const mockPrisma = {
       mockDb.orgs.push(org);
       return org;
     },
+    findUnique: async (args: any) => {
+      const org = mockDb.orgs.find((o) => o.id === args.where.id);
+      return org || null;
+    },
     deleteMany: async () => { mockDb.orgs = []; return { count: 0 }; },
   },
   user: {
@@ -134,6 +169,16 @@ const mockPrisma = {
       if (!user) return null;
       if (!mockCheckUserRls(user)) return null;
       return user;
+    },
+    findMany: async (args: any) => {
+      let filtered = mockDb.users;
+      if (args?.where?.orgId) {
+        filtered = filtered.filter((u) => u.orgId === args.where.orgId);
+      }
+      if (args?.where?.role) {
+        filtered = filtered.filter((u) => u.role === args.where.role);
+      }
+      return filtered.filter(mockCheckUserRls);
     },
     deleteMany: async () => { mockDb.users = []; return { count: 0 }; },
   },
@@ -281,8 +326,17 @@ const mockPrisma = {
       }
       return filtered[0] || null;
     },
-    findMany: async () => {
-      return mockDb.auditLogs;
+    findMany: async (args: any) => {
+      let filtered = mockDb.auditLogs;
+      if (args?.where?.tenderId) {
+        filtered = filtered.filter((l) => l.tenderId === args.where.tenderId);
+      }
+      if (args?.orderBy?.createdAt === 'asc') {
+        filtered = [...filtered].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      } else if (args?.orderBy?.createdAt === 'desc') {
+        filtered = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      return filtered;
     },
     deleteMany: async () => { mockDb.auditLogs = []; return { count: 0 }; },
   },
@@ -337,12 +391,69 @@ const mockPrisma = {
     },
     deleteMany: async () => { mockDb.webhookDeliveries = []; return { count: 0 }; },
   },
+
+  // ─── TenderDocument ────────────────────────────────────────────────────────
+  tenderDocument: {
+    create: async (args: any) => {
+      const doc = {
+        id: args.data.id || makeMockCuid(),
+        createdAt: new Date(),
+        ...args.data,
+      };
+      mockDb.tenderDocuments.push(doc);
+      return doc;
+    },
+    findMany: async (args: any) => {
+      let filtered = mockDb.tenderDocuments;
+      if (args?.where?.tenderId) {
+        filtered = filtered.filter((d) => d.tenderId === args.where.tenderId);
+      }
+      return filtered.filter(mockCheckTenderDocumentRls);
+    },
+    findUnique: async (args: any) => {
+      const doc = mockDb.tenderDocuments.find((d) => d.id === args.where.id);
+      if (!doc || !mockCheckTenderDocumentRls(doc)) return null;
+      return doc;
+    },
+    deleteMany: async () => { mockDb.tenderDocuments = []; return { count: 0 }; },
+  },
+
+  // ─── BidWithdrawal ─────────────────────────────────────────────────────────
+  bidWithdrawal: {
+    create: async (args: any) => {
+      const existing = mockDb.bidWithdrawals.find((w) => w.bidId === args.data.bidId);
+      if (existing) throw new Error('BidWithdrawal: bidId already exists (unique constraint)');
+      const withdrawal = {
+        id: args.data.id || makeMockCuid(),
+        withdrawnAt: new Date(),
+        ...args.data,
+      };
+      mockDb.bidWithdrawals.push(withdrawal);
+      return withdrawal;
+    },
+    findUnique: async (args: any) => {
+      const withdrawal = args.where.bidId
+        ? mockDb.bidWithdrawals.find((w) => w.bidId === args.where.bidId)
+        : mockDb.bidWithdrawals.find((w) => w.id === args.where.id);
+      if (!withdrawal || !mockCheckBidWithdrawalRls(withdrawal)) return null;
+      return withdrawal;
+    },
+    findMany: async (args: any) => {
+      let filtered = mockDb.bidWithdrawals;
+      if (args?.where?.bidId) {
+        filtered = filtered.filter((w) => w.bidId === args.where.bidId);
+      }
+      return filtered.filter(mockCheckBidWithdrawalRls);
+    },
+    deleteMany: async () => { mockDb.bidWithdrawals = []; return { count: 0 }; },
+  },
 };
 
 // Create the dynamic client Proxy
 export const prisma = new Proxy({} as typeof realPrisma, {
   get(target, prop) {
     if (prop === 'then') return undefined; // avoid promise-like resolution
+    if (prop === 'isDbReachable') return isDbReachable;
     
     // We intercept calls to direct methods of PrismaClient
     const isMock = isDbReachable === false;

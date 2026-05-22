@@ -10,6 +10,8 @@ import publicRoutes from './modules/public/public.routes.js';
 import publicVerifyRoutes from './modules/public/verify.routes.js';
 import complianceRoutes from './modules/compliance/compliance.routes.js';
 import webhookRoutes from './modules/webhooks/webhook.routes.js';
+import auditRoutes from './modules/audit/audit.routes.js';
+import orgRoutes from './modules/org/org.routes.js';
 import s3Plugin from './plugins/s3.js';
 
 
@@ -107,6 +109,8 @@ export function buildApp() {
   app.register(publicVerifyRoutes);
   app.register(complianceRoutes);
   app.register(webhookRoutes);
+  app.register(auditRoutes);
+  app.register(orgRoutes);
 
   return app;
 }

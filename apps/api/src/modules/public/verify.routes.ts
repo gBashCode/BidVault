@@ -4,7 +4,8 @@ import { z } from 'zod';
 
 export default async function publicVerifyRoutes(fastify: FastifyInstance) {
   // Rate limit plugin for public verify endpoints (100 req/min per IP)
-  fastify.register(require('@fastify/rate-limit'), {
+  const rateLimit = await import('@fastify/rate-limit');
+  fastify.register(rateLimit.default ?? rateLimit, {
     max: 100,
     timeWindow: '1 minute',
     allowList: [],
