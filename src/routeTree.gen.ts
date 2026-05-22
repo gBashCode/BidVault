@@ -10,18 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendorRouteImport } from './routes/vendor'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardVendorsRouteImport } from './routes/dashboard.vendors'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardRevealQueueRouteImport } from './routes/dashboard.reveal-queue'
+import { Route as DashboardOverviewRouteImport } from './routes/dashboard.overview'
+import { Route as DashboardMembersRouteImport } from './routes/dashboard.members'
+import { Route as DashboardKycReviewsRouteImport } from './routes/dashboard.kyc-reviews'
+import { Route as DashboardInvitationsRouteImport } from './routes/dashboard.invitations'
+import { Route as DashboardDraftsRouteImport } from './routes/dashboard.drafts'
+import { Route as DashboardCustodyStatusRouteImport } from './routes/dashboard.custody-status'
+import { Route as DashboardComplianceRouteImport } from './routes/dashboard.compliance'
 
 const VendorRoute = VendorRouteImport.update({
   id: '/vendor',
   path: '/vendor',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuditRoute = AuditRouteImport.update({
@@ -34,39 +39,177 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardVendorsRoute = DashboardVendorsRouteImport.update({
+  id: '/dashboard/vendors',
+  path: '/dashboard/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/dashboard/settings',
+  path: '/dashboard/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRevealQueueRoute = DashboardRevealQueueRouteImport.update({
+  id: '/dashboard/reveal-queue',
+  path: '/dashboard/reveal-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardOverviewRoute = DashboardOverviewRouteImport.update({
+  id: '/dashboard/overview',
+  path: '/dashboard/overview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardMembersRoute = DashboardMembersRouteImport.update({
+  id: '/dashboard/members',
+  path: '/dashboard/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardKycReviewsRoute = DashboardKycReviewsRouteImport.update({
+  id: '/dashboard/kyc-reviews',
+  path: '/dashboard/kyc-reviews',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardInvitationsRoute = DashboardInvitationsRouteImport.update({
+  id: '/dashboard/invitations',
+  path: '/dashboard/invitations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardDraftsRoute = DashboardDraftsRouteImport.update({
+  id: '/dashboard/drafts',
+  path: '/dashboard/drafts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardCustodyStatusRoute = DashboardCustodyStatusRouteImport.update({
+  id: '/dashboard/custody-status',
+  path: '/dashboard/custody-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardComplianceRoute = DashboardComplianceRouteImport.update({
+  id: '/dashboard/compliance',
+  path: '/dashboard/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/dashboard': typeof DashboardRoute
   '/vendor': typeof VendorRoute
+  '/dashboard/compliance': typeof DashboardComplianceRoute
+  '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
+  '/dashboard/drafts': typeof DashboardDraftsRoute
+  '/dashboard/invitations': typeof DashboardInvitationsRoute
+  '/dashboard/kyc-reviews': typeof DashboardKycReviewsRoute
+  '/dashboard/members': typeof DashboardMembersRoute
+  '/dashboard/overview': typeof DashboardOverviewRoute
+  '/dashboard/reveal-queue': typeof DashboardRevealQueueRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/vendors': typeof DashboardVendorsRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/dashboard': typeof DashboardRoute
   '/vendor': typeof VendorRoute
+  '/dashboard/compliance': typeof DashboardComplianceRoute
+  '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
+  '/dashboard/drafts': typeof DashboardDraftsRoute
+  '/dashboard/invitations': typeof DashboardInvitationsRoute
+  '/dashboard/kyc-reviews': typeof DashboardKycReviewsRoute
+  '/dashboard/members': typeof DashboardMembersRoute
+  '/dashboard/overview': typeof DashboardOverviewRoute
+  '/dashboard/reveal-queue': typeof DashboardRevealQueueRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/vendors': typeof DashboardVendorsRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/dashboard': typeof DashboardRoute
   '/vendor': typeof VendorRoute
+  '/dashboard/compliance': typeof DashboardComplianceRoute
+  '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
+  '/dashboard/drafts': typeof DashboardDraftsRoute
+  '/dashboard/invitations': typeof DashboardInvitationsRoute
+  '/dashboard/kyc-reviews': typeof DashboardKycReviewsRoute
+  '/dashboard/members': typeof DashboardMembersRoute
+  '/dashboard/overview': typeof DashboardOverviewRoute
+  '/dashboard/reveal-queue': typeof DashboardRevealQueueRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/vendors': typeof DashboardVendorsRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/audit' | '/dashboard' | '/vendor'
+  fullPaths:
+    | '/'
+    | '/audit'
+    | '/vendor'
+    | '/dashboard/compliance'
+    | '/dashboard/custody-status'
+    | '/dashboard/drafts'
+    | '/dashboard/invitations'
+    | '/dashboard/kyc-reviews'
+    | '/dashboard/members'
+    | '/dashboard/overview'
+    | '/dashboard/reveal-queue'
+    | '/dashboard/settings'
+    | '/dashboard/vendors'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/audit' | '/dashboard' | '/vendor'
-  id: '__root__' | '/' | '/audit' | '/dashboard' | '/vendor'
+  to:
+    | '/'
+    | '/audit'
+    | '/vendor'
+    | '/dashboard/compliance'
+    | '/dashboard/custody-status'
+    | '/dashboard/drafts'
+    | '/dashboard/invitations'
+    | '/dashboard/kyc-reviews'
+    | '/dashboard/members'
+    | '/dashboard/overview'
+    | '/dashboard/reveal-queue'
+    | '/dashboard/settings'
+    | '/dashboard/vendors'
+    | '/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/audit'
+    | '/vendor'
+    | '/dashboard/compliance'
+    | '/dashboard/custody-status'
+    | '/dashboard/drafts'
+    | '/dashboard/invitations'
+    | '/dashboard/kyc-reviews'
+    | '/dashboard/members'
+    | '/dashboard/overview'
+    | '/dashboard/reveal-queue'
+    | '/dashboard/settings'
+    | '/dashboard/vendors'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditRoute: typeof AuditRoute
-  DashboardRoute: typeof DashboardRoute
   VendorRoute: typeof VendorRoute
+  DashboardComplianceRoute: typeof DashboardComplianceRoute
+  DashboardCustodyStatusRoute: typeof DashboardCustodyStatusRoute
+  DashboardDraftsRoute: typeof DashboardDraftsRoute
+  DashboardInvitationsRoute: typeof DashboardInvitationsRoute
+  DashboardKycReviewsRoute: typeof DashboardKycReviewsRoute
+  DashboardMembersRoute: typeof DashboardMembersRoute
+  DashboardOverviewRoute: typeof DashboardOverviewRoute
+  DashboardRevealQueueRoute: typeof DashboardRevealQueueRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardVendorsRoute: typeof DashboardVendorsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,13 +219,6 @@ declare module '@tanstack/react-router' {
       path: '/vendor'
       fullPath: '/vendor'
       preLoaderRoute: typeof VendorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/audit': {
@@ -99,14 +235,101 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/vendors': {
+      id: '/dashboard/vendors'
+      path: '/dashboard/vendors'
+      fullPath: '/dashboard/vendors'
+      preLoaderRoute: typeof DashboardVendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/dashboard/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/reveal-queue': {
+      id: '/dashboard/reveal-queue'
+      path: '/dashboard/reveal-queue'
+      fullPath: '/dashboard/reveal-queue'
+      preLoaderRoute: typeof DashboardRevealQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/overview': {
+      id: '/dashboard/overview'
+      path: '/dashboard/overview'
+      fullPath: '/dashboard/overview'
+      preLoaderRoute: typeof DashboardOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/members': {
+      id: '/dashboard/members'
+      path: '/dashboard/members'
+      fullPath: '/dashboard/members'
+      preLoaderRoute: typeof DashboardMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/kyc-reviews': {
+      id: '/dashboard/kyc-reviews'
+      path: '/dashboard/kyc-reviews'
+      fullPath: '/dashboard/kyc-reviews'
+      preLoaderRoute: typeof DashboardKycReviewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/invitations': {
+      id: '/dashboard/invitations'
+      path: '/dashboard/invitations'
+      fullPath: '/dashboard/invitations'
+      preLoaderRoute: typeof DashboardInvitationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/drafts': {
+      id: '/dashboard/drafts'
+      path: '/dashboard/drafts'
+      fullPath: '/dashboard/drafts'
+      preLoaderRoute: typeof DashboardDraftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/custody-status': {
+      id: '/dashboard/custody-status'
+      path: '/dashboard/custody-status'
+      fullPath: '/dashboard/custody-status'
+      preLoaderRoute: typeof DashboardCustodyStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/compliance': {
+      id: '/dashboard/compliance'
+      path: '/dashboard/compliance'
+      fullPath: '/dashboard/compliance'
+      preLoaderRoute: typeof DashboardComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditRoute: AuditRoute,
-  DashboardRoute: DashboardRoute,
   VendorRoute: VendorRoute,
+  DashboardComplianceRoute: DashboardComplianceRoute,
+  DashboardCustodyStatusRoute: DashboardCustodyStatusRoute,
+  DashboardDraftsRoute: DashboardDraftsRoute,
+  DashboardInvitationsRoute: DashboardInvitationsRoute,
+  DashboardKycReviewsRoute: DashboardKycReviewsRoute,
+  DashboardMembersRoute: DashboardMembersRoute,
+  DashboardOverviewRoute: DashboardOverviewRoute,
+  DashboardRevealQueueRoute: DashboardRevealQueueRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardVendorsRoute: DashboardVendorsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
