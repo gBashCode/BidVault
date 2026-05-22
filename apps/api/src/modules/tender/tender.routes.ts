@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { prisma, withRls } from "@sealedbid/db";
 import { CreateTenderBody, TenderResponse, PublishTenderParams } from "./tender.schema.js";
 import { z } from "zod";
+import { AuditChain } from "@sealedbid/crypto";
 
 export default async function tenderRoutes(fastify: FastifyInstance) {
   // POST /v1/tenders
@@ -30,6 +31,7 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
         const tender = await tx.tender.create({
           data: {
             orgId: request.user.orgId,
+            createdById: request.user.id,
             title,
             description: description ?? null,
             submissionDeadline: subDead,
@@ -38,14 +40,22 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
           },
         });
         // audit log
+        const lastAudit = await tx.auditLog.findFirst({
+          where: { tenderId: tender.id },
+          orderBy: { id: "desc" },
+        });
+        const chain = new AuditChain(lastAudit?.eventHash);
+        const payload = { tenderId: tender.id, title: tender.title };
+        const { eventHash, prevHash } = chain.append("TENDER_CREATED", payload);
+
         await tx.auditLog.create({
           data: {
-            entityId: tender.id,
-            entityType: "TENDER",
-            action: "CREATED",
-            performedBy: request.user.id,
-            performedAt: new Date(),
-            hashChain: "", // placeholder, actual chaining handled in DB trigger
+            tenderId: tender.id,
+            prevHash,
+            eventType: "TENDER_CREATED",
+            actorId: request.user.id,
+            payload,
+            eventHash,
           },
         });
         return reply.code(201).send(tender);
@@ -78,14 +88,22 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
           where: { id },
           data: { status: "OPEN" },
         });
+        const lastAudit = await tx.auditLog.findFirst({
+          where: { tenderId: id },
+          orderBy: { id: "desc" },
+        });
+        const chain = new AuditChain(lastAudit?.eventHash);
+        const payload = { tenderId: id };
+        const { eventHash, prevHash } = chain.append("TENDER_PUBLISHED", payload);
+
         await tx.auditLog.create({
           data: {
-            entityId: id,
-            entityType: "TENDER",
-            action: "PUBLISHED",
-            performedBy: request.user.id,
-            performedAt: new Date(),
-            hashChain: "",
+            tenderId: id,
+            prevHash,
+            eventType: "TENDER_PUBLISHED",
+            actorId: request.user.id,
+            payload,
+            eventHash,
           },
         });
         return reply.send(updated);
@@ -102,7 +120,7 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       return await withRls(request.user, async (tx) => {
         const tenders = await tx.tender.findMany({
-          orderBy: { createdAt: "desc" },
+          orderBy: { submissionDeadline: "desc" },
         });
         return reply.send(tenders);
       });
@@ -199,14 +217,22 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
 
         await tx.tender.delete({ where: { id } });
 
+        const lastAudit = await tx.auditLog.findFirst({
+          where: { tenderId: id },
+          orderBy: { id: "desc" },
+        });
+        const chain = new AuditChain(lastAudit?.eventHash);
+        const payload = { tenderId: id };
+        const { eventHash, prevHash } = chain.append("TENDER_DELETED", payload);
+
         await tx.auditLog.create({
           data: {
-            entityId: id,
-            entityType: "TENDER",
-            action: "DELETED",
-            performedBy: request.user.id,
-            performedAt: new Date(),
-            hashChain: "",
+            tenderId: id,
+            prevHash,
+            eventType: "TENDER_DELETED",
+            actorId: request.user.id,
+            payload,
+            eventHash,
           },
         });
         return reply.code(204).send();

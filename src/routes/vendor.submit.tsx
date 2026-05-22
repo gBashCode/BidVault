@@ -181,12 +181,14 @@ function SubmissionFlow() {
       if (localSalt) {
         sessionStorage.setItem(`salt_${registeredBid.id}`, localSalt);
       }
-      sessionStorage.setItem(`plaintext_${registeredBid.id}`, JSON.stringify(plaintextBid));
-      // Store encrypted blob as hex in sessionStorage for robust offline fallback
-      const hexBlob = Array.from(encryptedBlob)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-      sessionStorage.setItem(`encrypted_blob_${registeredBid.id}`, hexBlob);
+      // Store only lightweight metadata (no file data) to avoid exceeding sessionStorage quota
+      const plaintextMeta = {
+        amount: parseFloat(amount),
+        currency: "EUR",
+        files: fileDataList.map(({ name, size, type }) => ({ name, size, type })),
+      };
+      sessionStorage.setItem(`plaintext_${registeredBid.id}`, JSON.stringify(plaintextMeta));
+      // Skip storing encrypted blob in sessionStorage — it's uploaded to S3 inline below
 
       // Generate Bid Receipt Key File for Vendor to download
       const receiptData = {
