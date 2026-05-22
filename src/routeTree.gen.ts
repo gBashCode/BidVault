@@ -12,7 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendorRouteImport } from './routes/vendor'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VendorIndexRouteImport } from './routes/vendor.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as VendorWithdrawRouteImport } from './routes/vendor.withdraw'
+import { Route as VendorTechnicalRouteImport } from './routes/vendor.technical'
+import { Route as VendorSubmitRouteImport } from './routes/vendor.submit'
+import { Route as VendorQaRouteImport } from './routes/vendor.qa'
+import { Route as VendorDocumentsRouteImport } from './routes/vendor.documents'
+import { Route as VendorComplianceRouteImport } from './routes/vendor.compliance'
 import { Route as DashboardVendorsRouteImport } from './routes/dashboard.vendors'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardRevealQueueRouteImport } from './routes/dashboard.reveal-queue'
@@ -39,10 +46,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorIndexRoute = VendorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VendorRoute,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const VendorWithdrawRoute = VendorWithdrawRouteImport.update({
+  id: '/withdraw',
+  path: '/withdraw',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorTechnicalRoute = VendorTechnicalRouteImport.update({
+  id: '/technical',
+  path: '/technical',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorSubmitRoute = VendorSubmitRouteImport.update({
+  id: '/submit',
+  path: '/submit',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorQaRoute = VendorQaRouteImport.update({
+  id: '/qa',
+  path: '/qa',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorDocumentsRoute = VendorDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorComplianceRoute = VendorComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
+  getParentRoute: () => VendorRoute,
 } as any)
 const DashboardVendorsRoute = DashboardVendorsRouteImport.update({
   id: '/dashboard/vendors',
@@ -98,7 +140,7 @@ const DashboardComplianceRoute = DashboardComplianceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/vendor': typeof VendorRoute
+  '/vendor': typeof VendorRouteWithChildren
   '/dashboard/compliance': typeof DashboardComplianceRoute
   '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
   '/dashboard/drafts': typeof DashboardDraftsRoute
@@ -109,12 +151,18 @@ export interface FileRoutesByFullPath {
   '/dashboard/reveal-queue': typeof DashboardRevealQueueRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/vendors': typeof DashboardVendorsRoute
+  '/vendor/compliance': typeof VendorComplianceRoute
+  '/vendor/documents': typeof VendorDocumentsRoute
+  '/vendor/qa': typeof VendorQaRoute
+  '/vendor/submit': typeof VendorSubmitRoute
+  '/vendor/technical': typeof VendorTechnicalRoute
+  '/vendor/withdraw': typeof VendorWithdrawRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/vendor/': typeof VendorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/vendor': typeof VendorRoute
   '/dashboard/compliance': typeof DashboardComplianceRoute
   '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
   '/dashboard/drafts': typeof DashboardDraftsRoute
@@ -125,13 +173,20 @@ export interface FileRoutesByTo {
   '/dashboard/reveal-queue': typeof DashboardRevealQueueRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/vendors': typeof DashboardVendorsRoute
+  '/vendor/compliance': typeof VendorComplianceRoute
+  '/vendor/documents': typeof VendorDocumentsRoute
+  '/vendor/qa': typeof VendorQaRoute
+  '/vendor/submit': typeof VendorSubmitRoute
+  '/vendor/technical': typeof VendorTechnicalRoute
+  '/vendor/withdraw': typeof VendorWithdrawRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/vendor': typeof VendorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/vendor': typeof VendorRoute
+  '/vendor': typeof VendorRouteWithChildren
   '/dashboard/compliance': typeof DashboardComplianceRoute
   '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
   '/dashboard/drafts': typeof DashboardDraftsRoute
@@ -142,7 +197,14 @@ export interface FileRoutesById {
   '/dashboard/reveal-queue': typeof DashboardRevealQueueRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/vendors': typeof DashboardVendorsRoute
+  '/vendor/compliance': typeof VendorComplianceRoute
+  '/vendor/documents': typeof VendorDocumentsRoute
+  '/vendor/qa': typeof VendorQaRoute
+  '/vendor/submit': typeof VendorSubmitRoute
+  '/vendor/technical': typeof VendorTechnicalRoute
+  '/vendor/withdraw': typeof VendorWithdrawRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/vendor/': typeof VendorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,12 +222,18 @@ export interface FileRouteTypes {
     | '/dashboard/reveal-queue'
     | '/dashboard/settings'
     | '/dashboard/vendors'
+    | '/vendor/compliance'
+    | '/vendor/documents'
+    | '/vendor/qa'
+    | '/vendor/submit'
+    | '/vendor/technical'
+    | '/vendor/withdraw'
     | '/dashboard/'
+    | '/vendor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/audit'
-    | '/vendor'
     | '/dashboard/compliance'
     | '/dashboard/custody-status'
     | '/dashboard/drafts'
@@ -176,7 +244,14 @@ export interface FileRouteTypes {
     | '/dashboard/reveal-queue'
     | '/dashboard/settings'
     | '/dashboard/vendors'
+    | '/vendor/compliance'
+    | '/vendor/documents'
+    | '/vendor/qa'
+    | '/vendor/submit'
+    | '/vendor/technical'
+    | '/vendor/withdraw'
     | '/dashboard'
+    | '/vendor'
   id:
     | '__root__'
     | '/'
@@ -192,13 +267,20 @@ export interface FileRouteTypes {
     | '/dashboard/reveal-queue'
     | '/dashboard/settings'
     | '/dashboard/vendors'
+    | '/vendor/compliance'
+    | '/vendor/documents'
+    | '/vendor/qa'
+    | '/vendor/submit'
+    | '/vendor/technical'
+    | '/vendor/withdraw'
     | '/dashboard/'
+    | '/vendor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditRoute: typeof AuditRoute
-  VendorRoute: typeof VendorRoute
+  VendorRoute: typeof VendorRouteWithChildren
   DashboardComplianceRoute: typeof DashboardComplianceRoute
   DashboardCustodyStatusRoute: typeof DashboardCustodyStatusRoute
   DashboardDraftsRoute: typeof DashboardDraftsRoute
@@ -235,12 +317,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendor/': {
+      id: '/vendor/'
+      path: '/'
+      fullPath: '/vendor/'
+      preLoaderRoute: typeof VendorIndexRouteImport
+      parentRoute: typeof VendorRoute
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/dashboard'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/vendor/withdraw': {
+      id: '/vendor/withdraw'
+      path: '/withdraw'
+      fullPath: '/vendor/withdraw'
+      preLoaderRoute: typeof VendorWithdrawRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/technical': {
+      id: '/vendor/technical'
+      path: '/technical'
+      fullPath: '/vendor/technical'
+      preLoaderRoute: typeof VendorTechnicalRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/submit': {
+      id: '/vendor/submit'
+      path: '/submit'
+      fullPath: '/vendor/submit'
+      preLoaderRoute: typeof VendorSubmitRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/qa': {
+      id: '/vendor/qa'
+      path: '/qa'
+      fullPath: '/vendor/qa'
+      preLoaderRoute: typeof VendorQaRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/documents': {
+      id: '/vendor/documents'
+      path: '/documents'
+      fullPath: '/vendor/documents'
+      preLoaderRoute: typeof VendorDocumentsRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/compliance': {
+      id: '/vendor/compliance'
+      path: '/compliance'
+      fullPath: '/vendor/compliance'
+      preLoaderRoute: typeof VendorComplianceRouteImport
+      parentRoute: typeof VendorRoute
     }
     '/dashboard/vendors': {
       id: '/dashboard/vendors'
@@ -315,10 +446,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface VendorRouteChildren {
+  VendorComplianceRoute: typeof VendorComplianceRoute
+  VendorDocumentsRoute: typeof VendorDocumentsRoute
+  VendorQaRoute: typeof VendorQaRoute
+  VendorSubmitRoute: typeof VendorSubmitRoute
+  VendorTechnicalRoute: typeof VendorTechnicalRoute
+  VendorWithdrawRoute: typeof VendorWithdrawRoute
+  VendorIndexRoute: typeof VendorIndexRoute
+}
+
+const VendorRouteChildren: VendorRouteChildren = {
+  VendorComplianceRoute: VendorComplianceRoute,
+  VendorDocumentsRoute: VendorDocumentsRoute,
+  VendorQaRoute: VendorQaRoute,
+  VendorSubmitRoute: VendorSubmitRoute,
+  VendorTechnicalRoute: VendorTechnicalRoute,
+  VendorWithdrawRoute: VendorWithdrawRoute,
+  VendorIndexRoute: VendorIndexRoute,
+}
+
+const VendorRouteWithChildren =
+  VendorRoute._addFileChildren(VendorRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditRoute: AuditRoute,
-  VendorRoute: VendorRoute,
+  VendorRoute: VendorRouteWithChildren,
   DashboardComplianceRoute: DashboardComplianceRoute,
   DashboardCustodyStatusRoute: DashboardCustodyStatusRoute,
   DashboardDraftsRoute: DashboardDraftsRoute,
