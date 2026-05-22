@@ -17,11 +17,15 @@ const target = new Date(Date.now() + 1000 * 60 * 60 * 18 + 1000 * 42);
 
 function VendorPortal() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute top-20 right-10 h-[600px] w-[600px] bg-primary/10 animate-pulse" style={{ animationDuration: "15s" }} />
+      <div className="glow-orb absolute bottom-20 left-20 h-[450px] w-[450px] bg-amber-deep/10" />
+
       <SiteHeader />
-      <div className="relative">
-        <div className="absolute inset-0 bg-radial-ember opacity-50" />
-        <div className="absolute inset-0 bg-grid-fine opacity-[0.4]" />
+      <div className="relative z-10">
+        <div className="absolute inset-0 bg-radial-ember opacity-30" />
+        <div className="absolute inset-0 bg-grid-fine opacity-[0.25]" />
         <div className="relative mx-auto max-w-[1180px] px-6 py-12">
           <Header />
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -49,15 +53,15 @@ function Header() {
           GOV-2026-ROAD-INFRA-014 · Federal Highway Reconstruction Phase II
         </p>
       </div>
-      <div className="rounded-lg border border-border bg-card px-4 py-3">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Deadline in
+      <div className="glass-card rounded-lg px-4 py-3 shadow-md hover:translate-y-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            Deadline in
+          </div>
+          <div className="tabular mt-1 font-display text-xl font-semibold text-primary">
+            {String(d).padStart(2, "0")}:{String(h).padStart(2, "0")}:
+            {String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
+          </div>
         </div>
-        <div className="tabular mt-1 font-display text-xl font-semibold text-primary">
-          {String(d).padStart(2, "0")}:{String(h).padStart(2, "0")}:
-          {String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
-        </div>
-      </div>
     </div>
   );
 }
@@ -93,7 +97,7 @@ function SubmissionFlow() {
   }, [progress, step]);
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-7">
+    <div className="glass-card relative rounded-2xl p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
       {/* Stepper */}
       <ol className="flex items-center gap-2">
         {steps.map((s, i) => {
@@ -129,7 +133,7 @@ function SubmissionFlow() {
         })}
       </ol>
 
-      <div className="mt-8 rounded-xl border border-border bg-surface p-6">
+      <div className="mt-8 rounded-xl border border-border/50 bg-surface/50 p-6">
         {step === 0 && (
           <FilePicker
             onChoose={() => {
@@ -308,7 +312,7 @@ function SealedResult({ onReset }: { onReset: () => void }) {
 function SideTrust() {
   return (
     <aside className="space-y-4">
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="glass-card rounded-2xl p-6 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Trust indicators
         </div>
@@ -322,14 +326,14 @@ function SideTrust() {
             <li key={k} className="flex items-center justify-between">
               <span className="text-foreground/85">{k}</span>
               <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-success">
-                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
                 {v}
               </span>
             </li>
           ))}
         </ul>
       </div>
-      <div className="rounded-2xl border border-border bg-graphite p-6 text-ivory dark:bg-surface">
+      <div className="glass-card rounded-2xl bg-graphite p-6 text-ivory dark:bg-surface shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)] hover:translate-y-0">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
           What happens at reveal
         </div>

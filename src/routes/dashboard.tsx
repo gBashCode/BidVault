@@ -16,11 +16,15 @@ const target = new Date(Date.now() + 1000 * 60 * 60 * 18 + 1000 * 42);
 
 function Dashboard() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute top-20 right-10 h-[600px] w-[600px] bg-primary/10 animate-pulse" style={{ animationDuration: "15s" }} />
+      <div className="glow-orb absolute bottom-20 left-1/3 h-[500px] w-[500px] bg-amber-deep/10" />
+
       <SiteHeader />
-      <div className="mx-auto grid max-w-[1400px] grid-cols-[220px_1fr] gap-0">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-[220px_1fr] gap-0 relative z-10">
         <Sidebar />
-        <main className="border-l border-border px-8 py-8">
+        <main className="border-l border-border bg-grid-fine/30 px-8 py-8 relative">
           <Breadcrumb />
           <Header />
           <MetricRow />
@@ -149,14 +153,14 @@ function MetricRow() {
     { k: "Audit chain", v: "OK", sub: "root 0x9c4e…1aa2" },
   ];
   return (
-    <div className="mt-6 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
+    <div className="mt-6 grid gap-4 md:grid-cols-4">
       {m.map((x) => (
-        <div key={x.k} className="bg-card px-5 py-4">
+        <div key={x.k} className="glass-card rounded-xl px-5 py-4 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]">
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {x.k}
           </div>
-          <div className="tabular mt-1 font-display text-2xl font-semibold">{x.v}</div>
-          <div className="font-mono text-[10.5px] text-muted-foreground">{x.sub}</div>
+          <div className="tabular mt-1 font-display text-2xl font-semibold text-gradient-ember inline-block">{x.v}</div>
+          <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">{x.sub}</div>
         </div>
       ))}
     </div>
@@ -165,8 +169,9 @@ function MetricRow() {
 
 function CountdownPanel() {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6">
+    <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
       <div className="absolute inset-0 bg-radial-ember opacity-50" />
+      <div className="glow-orb absolute -top-10 -right-10 h-[250px] w-[250px] bg-primary/10" />
       <div className="relative grid items-center gap-6 md:grid-cols-[auto_1fr]">
         <CircularCountdown target={target} size={220} total={1000 * 60 * 60 * 72} />
         <div>
@@ -207,8 +212,8 @@ function RevealQueue() {
     { id: "FIN-2026-BANK-CUSTODY-03", in: "T-12d 22:55", bids: 4, status: "Draft" },
   ];
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3">
+    <div className="glass-card relative rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+      <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Reveal queue
         </div>
@@ -252,8 +257,8 @@ function ActiveTendersTable() {
     ["BID-014-F6", "Concord Engineering", "IT09832240", "0xee78…c0a4", "30.0 MB", "Sealed"],
   ];
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3">
+    <div className="glass-card relative overflow-hidden rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+      <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Encrypted submissions · 14 sealed
         </div>
@@ -306,8 +311,8 @@ function Compliance() {
     { k: "DPA · DPIA on file", v: "v3 · 2026-02-11" },
   ];
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+    <div className="glass-card relative rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+      <div className="border-b border-border/70 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
         Compliance monitor
       </div>
       <ul className="divide-y divide-border text-[13px]">
@@ -335,8 +340,8 @@ function VendorActivity() {
     ["Concord Engineering", "Document re-uploaded", "T-44:02"],
   ];
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+    <div className="glass-card relative rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+      <div className="border-b border-border/70 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
         Vendor activity
       </div>
       <ul className="divide-y divide-border">
@@ -363,8 +368,8 @@ function AuditLedger() {
     ["T-50:18", "vendor.join", "Northwind Construct", "0xb112…f00d"],
   ];
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3">
+    <div className="glass-card relative rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+      <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Audit ledger · append-only
         </div>

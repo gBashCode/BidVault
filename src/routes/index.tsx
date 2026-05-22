@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -18,8 +19,29 @@ const heroBids = [
 ];
 
 function Index() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+          }
+        });
+      },
+      { threshold: 0.05, rootMargin: "0px 0px -60px 0px" }
+    );
+
+    const targets = document.querySelectorAll(".reveal-on-scroll");
+    targets.forEach((el) => observer.observe(el));
+
+    return () => {
+      targets.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <SiteHeader />
       <Hero />
       <TrustStrip />
@@ -41,8 +63,13 @@ function Hero() {
       <div className="absolute inset-0 bg-radial-ember opacity-90" />
       <div className="absolute inset-0 bg-grid opacity-[0.35]" />
       <div className="absolute inset-0 bg-noise opacity-40 mix-blend-overlay" />
+      
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute -top-40 -left-40 h-[600px] w-[600px] bg-primary/20" />
+      <div className="glow-orb absolute top-60 right-10 h-[400px] w-[400px] bg-amber-deep/15" />
+
       <div className="relative mx-auto grid max-w-[1400px] gap-16 px-6 pb-24 pt-20 md:grid-cols-[1.15fr_1fr] md:pt-28">
-        <div>
+        <div className="reveal-on-scroll">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 backdrop-blur">
             <span className="h-1.5 w-1.5 animate-seal-pulse rounded-full bg-primary" />
             <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -62,12 +89,12 @@ function Hero() {
             same atomic moment — with an immutable audit trail to prove it.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <button className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold">
+            <button className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform">
               Book enterprise demo
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex h-12 items-center rounded-md border border-border bg-card/80 px-6 text-[14px] font-medium text-foreground backdrop-blur transition-colors hover:bg-card"
+              className="inline-flex h-12 items-center rounded-md border border-border bg-card/85 px-6 text-[14px] font-medium text-foreground backdrop-blur transition-colors hover:bg-card/95 hover:scale-[1.02] active:scale-[0.98]"
             >
               Explore live console →
             </Link>
@@ -89,9 +116,9 @@ function Hero() {
         </div>
 
         {/* Right: Live tender card */}
-        <div className="relative">
-          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-primary/20 via-transparent to-amber-deep/10 blur-2xl" />
-          <div className="relative rounded-2xl border border-border bg-card/90 p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+        <div className="relative reveal-on-scroll delay-100">
+          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-primary/30 via-transparent to-amber-deep/20 blur-3xl opacity-80 animate-pulse" style={{ animationDuration: "8s" }} />
+          <div className="glass-card relative rounded-2xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]">
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -150,11 +177,11 @@ function TrustStrip() {
     { k: "Audit-chain", v: "Append-only Merkle ledger" },
   ];
   return (
-    <section className="border-b border-border bg-surface">
+    <section className="border-b border-border bg-surface reveal-on-scroll">
       <div className="mx-auto grid max-w-[1400px] grid-cols-2 divide-x divide-border px-0 md:grid-cols-4">
         {items.map((it) => (
-          <div key={it.k} className="px-6 py-7">
-            <div className="font-display text-base font-semibold">{it.k}</div>
+          <div key={it.k} className="px-6 py-7 hover:bg-card/30 transition-colors duration-300">
+            <div className="font-display text-base font-semibold text-gradient-ember inline-block">{it.k}</div>
             <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               {it.v}
             </div>
@@ -195,19 +222,25 @@ function HowItWorks() {
     },
   ];
   return (
-    <section className="relative overflow-hidden border-b border-border">
+    <section className="relative overflow-hidden border-b border-border bg-background">
       <div className="absolute inset-0 bg-grid-fine opacity-[0.4]" />
+      
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute top-1/2 left-1/3 h-[350px] w-[350px] bg-primary/10" />
+
       <div className="relative mx-auto max-w-[1400px] px-6 py-24">
-        <SectionHeader
-          eyebrow="Protocol"
-          title="Five steps to a fair tender."
-          sub="From draft to verified award, every event is signed, time-stamped and joined to the next."
-        />
+        <div className="reveal-on-scroll">
+          <SectionHeader
+            eyebrow="Protocol"
+            title="Five steps to a fair tender."
+            sub="From draft to verified award, every event is signed, time-stamped and joined to the next."
+          />
+        </div>
         <div className="mt-14 grid gap-6 md:grid-cols-5">
           {steps.map((s, i) => (
             <div
               key={s.n}
-              className="group relative rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+              className={`group relative glass-card p-5 reveal-on-scroll delay-${(i + 1) * 100}`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -234,7 +267,11 @@ function LiveReveal() {
     <section className="relative overflow-hidden border-b border-border bg-graphite text-ivory dark:bg-surface">
       <div className="absolute inset-0 bg-grid opacity-[0.15]" />
       <div className="absolute inset-x-0 top-0 h-px divider-x" />
-      <div className="relative mx-auto max-w-[1400px] px-6 py-24">
+      
+      {/* Decorative Orb */}
+      <div className="glow-orb absolute bottom-0 right-10 h-[500px] w-[500px] bg-primary/10" />
+
+      <div className="relative mx-auto max-w-[1400px] px-6 py-24 reveal-on-scroll">
         <div className="grid items-end gap-8 md:grid-cols-[1fr_auto]">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
@@ -296,18 +333,23 @@ function Features() {
     },
   ];
   return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-[1400px] px-6 py-24">
-        <SectionHeader
-          eyebrow="Capabilities"
-          title="Enterprise procurement, re-engineered."
-          sub="Six surfaces, one protocol. Each component runs in production for ministries, banks and infrastructure operators."
-        />
-        <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3">
-          {items.map((it) => (
+    <section className="relative overflow-hidden border-b border-border bg-background">
+      {/* Decorative Orb */}
+      <div className="glow-orb absolute top-10 right-1/4 h-[350px] w-[350px] bg-primary/10" />
+
+      <div className="relative mx-auto max-w-[1400px] px-6 py-24">
+        <div className="reveal-on-scroll">
+          <SectionHeader
+            eyebrow="Capabilities"
+            title="Enterprise procurement, re-engineered."
+            sub="Six surfaces, one protocol. Each component runs in production for ministries, banks and infrastructure operators."
+          />
+        </div>
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {items.map((it, i) => (
             <div
               key={it.k}
-              className="group relative bg-card p-7 transition-colors hover:bg-surface"
+              className={`group relative glass-card p-7 reveal-on-scroll delay-${((i % 3) + 1) * 100}`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -332,13 +374,17 @@ function DashboardPreview() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-surface">
       <div className="absolute inset-0 bg-grid-fine opacity-[0.4]" />
-      <div className="relative mx-auto max-w-[1400px] px-6 py-24">
+      
+      {/* Decorative Orb */}
+      <div className="glow-orb absolute bottom-0 left-10 h-[450px] w-[450px] bg-primary/10" />
+
+      <div className="relative mx-auto max-w-[1400px] px-6 py-24 reveal-on-scroll">
         <SectionHeader
           eyebrow="Console"
           title="A control surface built for procurement teams."
           sub="Dense, calm, and immediate. The console is the operational reality of running a sealed tender."
         />
-        <div className="mt-12 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(0,0,0,0.25)]">
+        <div className="mt-12 overflow-hidden rounded-2xl border border-border bg-card/65 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.25)] backdrop-blur-md">
           <DashboardMockup />
         </div>
         <div className="mt-6 flex justify-center">
@@ -519,9 +565,14 @@ function AuditPanel() {
 /* ---------- SECURITY SECTION ---------- */
 function SecuritySection() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
+    <section className="relative overflow-hidden border-b border-border bg-background">
       <div className="absolute inset-0 bg-radial-ember opacity-50" />
-      <div className="relative mx-auto grid max-w-[1400px] gap-12 px-6 py-24 md:grid-cols-[1fr_1.1fr] md:items-center">
+      
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute top-20 right-10 h-[500px] w-[500px] bg-primary/10 animate-pulse" style={{ animationDuration: "12s" }} />
+      <div className="glow-orb absolute bottom-10 left-10 h-[400px] w-[400px] bg-amber-deep/15" />
+
+      <div className="relative mx-auto grid max-w-[1400px] gap-12 px-6 py-24 md:grid-cols-[1fr_1.1fr] md:items-center reveal-on-scroll">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
             Cryptographic trust
@@ -549,13 +600,13 @@ function SecuritySection() {
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl border border-border bg-card/90 p-6 backdrop-blur">
+        <div className="glass-card relative rounded-2xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Verification example
             </div>
             <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-success">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" /> Match
+              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Match
             </span>
           </div>
           <div className="mt-5 grid gap-3 font-mono text-[11.5px]">
@@ -568,10 +619,10 @@ function SecuritySection() {
             ].map(([k, v]) => (
               <div
                 key={k}
-                className="grid grid-cols-[140px_1fr] items-baseline gap-3 rounded-md border border-border bg-surface px-3 py-2"
+                className="grid grid-cols-[140px_1fr] items-baseline gap-3 rounded-md border border-border/50 bg-surface/50 px-3 py-2 hover:border-primary/30 transition-colors"
               >
                 <span className="text-muted-foreground">{k}</span>
-                <span className="truncate text-foreground">{v}</span>
+                <span className="truncate text-foreground font-mono">{v}</span>
               </div>
             ))}
           </div>
@@ -590,7 +641,12 @@ function FinalCta() {
     <section className="relative overflow-hidden border-b border-border bg-graphite text-ivory">
       <div className="absolute inset-0 bg-grid opacity-[0.18]" />
       <div className="absolute inset-0 bg-radial-ember opacity-60" />
-      <div className="relative mx-auto max-w-[1400px] px-6 py-28 text-center">
+      
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] bg-primary/20 blur-[120px]" />
+      <div className="glow-orb absolute bottom-0 right-10 h-[300px] w-[300px] bg-amber-deep/15" />
+
+      <div className="relative mx-auto max-w-[1400px] px-6 py-28 text-center reveal-on-scroll">
         <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-ivory/15 bg-ivory/5 px-3 py-1.5 backdrop-blur">
           <span className="h-1.5 w-1.5 rounded-full bg-primary animate-seal-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ivory/70">
@@ -601,12 +657,12 @@ function FinalCta() {
           When fairness must be <span className="text-gradient-ember">proven</span>, not promised.
         </h2>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <button className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold">
+          <button className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform">
             Talk to procurement engineering
           </button>
           <a
             href="#"
-            className="inline-flex h-12 items-center rounded-md border border-ivory/20 bg-ivory/5 px-6 text-[14px] font-medium text-ivory backdrop-blur hover:bg-ivory/10"
+            className="inline-flex h-12 items-center rounded-md border border-ivory/20 bg-ivory/5 px-6 text-[14px] font-medium text-ivory backdrop-blur hover:bg-ivory/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             Read the protocol whitepaper
           </a>

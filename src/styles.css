@@ -290,3 +290,54 @@
     linear-gradient(180deg, color-mix(in oklch, var(--graphite) 4%, var(--surface)), var(--surface-2)),
     repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in oklch, var(--foreground) 4%, transparent) 8px 9px);
 }
+
+/* Glassmorphism & Cinematic UI */
+.glass-card {
+  background: color-mix(in oklch, var(--card) 45%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0px color-mix(in oklch, white 5%, transparent);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: color-mix(in oklch, var(--primary) 40%, transparent);
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.7),
+    0 0 30px -10px color-mix(in oklch, var(--primary) 20%, transparent),
+    inset 0 1px 0px color-mix(in oklch, white 8%, transparent);
+  transform: translateY(-2px);
+}
+
+/* Glow Orbs */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.15;
+  mix-blend-mode: screen;
+}
+
+/* Scroll Animations */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+.delay-500 { transition-delay: 500ms; }
+

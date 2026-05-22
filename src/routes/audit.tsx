@@ -24,10 +24,14 @@ const events = [
 
 function AuditPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Decorative Orbs */}
+      <div className="glow-orb absolute top-10 right-20 h-[500px] w-[500px] bg-primary/10 animate-pulse" style={{ animationDuration: "14s" }} />
+      <div className="glow-orb absolute bottom-20 left-10 h-[400px] w-[400px] bg-amber-deep/10" />
+
       <SiteHeader />
-      <div className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-grid-fine opacity-[0.4]" />
+      <div className="relative overflow-hidden border-b border-border bg-grid-fine/30">
+        <div className="absolute inset-0 bg-radial-ember opacity-30" />
         <div className="relative mx-auto max-w-[1280px] px-6 py-14">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -42,13 +46,13 @@ function AuditPage() {
                 to Ethereum and signed by 5 of 7 trustees.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
+            <div className="grid grid-cols-3 gap-3 font-mono text-[11px]">
               {[
                 ["Last anchor", "13:00:00Z"],
                 ["Height", "2,184,991"],
                 ["Integrity", "OK"],
               ].map(([k, v]) => (
-                <div key={k} className="rounded-md border border-border bg-card px-3 py-2">
+                <div key={k} className="glass-card rounded-md px-3 py-2 shadow-sm hover:translate-y-0">
                   <div className="text-muted-foreground">{k}</div>
                   <div className="mt-0.5 text-foreground">{v}</div>
                 </div>
@@ -58,9 +62,9 @@ function AuditPage() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1280px] gap-6 px-6 py-10 lg:grid-cols-[1fr_320px]">
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border px-5 py-3">
+      <div className="relative z-10 mx-auto grid max-w-[1280px] gap-6 px-6 py-10 lg:grid-cols-[1fr_320px]">
+        <div className="glass-card relative overflow-hidden rounded-xl shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+          <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Event log · GOV-2026-ROAD-INFRA-014
             </div>
@@ -102,7 +106,7 @@ function AuditPage() {
         </div>
 
         <aside className="space-y-4">
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="glass-card rounded-xl p-5 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Merkle root
             </div>
@@ -110,11 +114,11 @@ function AuditPage() {
               0x9c4e44a91aa2003e771bbcd031a02201ee78bb5500a113fde0
             </div>
             <div className="mt-3 inline-flex items-center gap-1.5 rounded-sm bg-success/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-success">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" /> Anchored on-chain
+              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Anchored on-chain
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="glass-card rounded-xl p-5 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Trustee signatures
             </div>
@@ -134,7 +138,7 @@ function AuditPage() {
             </ul>
           </div>
 
-          <div className="rounded-xl border border-border bg-graphite p-5 text-ivory dark:bg-surface">
+          <div className="glass-card rounded-xl bg-graphite p-5 text-ivory dark:bg-surface shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)] hover:translate-y-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
               Verify locally
             </div>

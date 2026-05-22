@@ -12,10 +12,10 @@ export interface Bid {
 export function SealedBidCard({ bid, revealed }: { bid: Bid; revealed: boolean }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-lg border transition-all duration-700 ${
+      className={`relative overflow-hidden rounded-lg border transition-all duration-700 backdrop-blur-sm ${
         revealed
-          ? "border-primary/40 bg-card ring-orange-glow"
-          : "border-border bid-sealed"
+          ? "border-primary/40 bg-card/65 shadow-[0_15px_35px_-10px_rgba(0,0,0,0.5)] ring-orange-glow"
+          : "border-border/60 bg-surface/40 bid-sealed hover:border-primary/30 hover:translate-y-[-2px]"
       }`}
     >
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
@@ -87,7 +87,7 @@ function maskHash(h: string) {
 export function RevealShowcase({ bids }: { bids: Bid[] }) {
   const [revealed, setRevealed] = useState(false);
   return (
-    <div className="rounded-2xl border border-border bg-surface/70 p-5 md:p-7">
+    <div className="glass-card relative rounded-2xl p-5 md:p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
