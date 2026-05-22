@@ -9,7 +9,7 @@ export interface Bid {
   rank?: number;
 }
 
-export function SealedBidCard({ bid, revealed }: { bid: Bid; revealed: boolean }) {
+export function BidVaultCard({ bid, revealed }: { bid: Bid; revealed: boolean }) {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
@@ -80,15 +80,16 @@ export function SealedBidCard({ bid, revealed }: { bid: Bid; revealed: boolean }
         </div>
       </div>
 
-      {!revealed && (
-        <div className="relative h-1 overflow-hidden bg-border/60 animate-scan" />
-      )}
+      {!revealed && <div className="relative h-1 overflow-hidden bg-border/60 animate-scan" />}
     </div>
   );
 }
 
 function maskHash(h: string) {
-  return h.replace(/[0-9a-fA-F]/g, "•").replace(/(.{4})/g, "$1 ").trim();
+  return h
+    .replace(/[0-9a-fA-F]/g, "•")
+    .replace(/(.{4})/g, "$1 ")
+    .trim();
 }
 
 export function RevealShowcase({ bids }: { bids: Bid[] }) {
@@ -113,7 +114,7 @@ export function RevealShowcase({ bids }: { bids: Bid[] }) {
       "→ Decrypting bid ciphers using AES-256-GCM...",
       "→ Verifying bid integrity against commitment hashes...",
       "→ Appending unseal block to append-only Merkle ledger...",
-      "✓ Decryption successful. Bids verified independently."
+      "✓ Decryption successful. Bids verified independently.",
     ];
 
     let currentLog = 0;
@@ -146,11 +147,15 @@ export function RevealShowcase({ bids }: { bids: Bid[] }) {
           <div className="flex items-center justify-between border-b border-border/50 pb-3">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">Cryptographic Decryption Console</span>
+              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                Cryptographic Decryption Console
+              </span>
             </div>
-            <span className="font-mono text-[10px] text-muted-foreground">Session: SB-901A · HSM Live</span>
+            <span className="font-mono text-[10px] text-muted-foreground">
+              Session: SB-901A · HSM Live
+            </span>
           </div>
-          
+
           <div className="my-5 flex-1 font-mono text-[11.5px] leading-relaxed space-y-1.5 overflow-y-auto text-left text-ivory/90">
             {logs.map((log, idx) => (
               <div key={idx} className={log.startsWith("✓") ? "text-success font-semibold" : ""}>
@@ -190,11 +195,11 @@ export function RevealShowcase({ bids }: { bids: Bid[] }) {
           {status === "revealed" ? "Re-seal demo" : "Trigger reveal"}
         </button>
       </div>
-      
+
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {bids.map((b, i) => (
           <div key={b.ref} style={{ animationDelay: `${i * 120}ms` }} className="animate-rise">
-            <SealedBidCard
+            <BidVaultCard
               bid={{ ...b, rank: status === "revealed" ? i + 1 : undefined }}
               revealed={status === "revealed"}
             />

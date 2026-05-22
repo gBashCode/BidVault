@@ -1,6 +1,6 @@
-import { keccak_256 } from '@noble/hashes/sha3';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
-import { makeCanonical } from './commitment.js';
+import { keccak_256 } from "@noble/hashes/sha3";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
+import { makeCanonical } from "./commitment.js";
 
 export class AuditChain {
   private prevHash: string;
@@ -9,8 +9,8 @@ export class AuditChain {
     if (lastHash) {
       this.prevHash = lastHash;
     } else {
-      const genesisBytes = keccak_256(utf8ToBytes('SEALEDBID_GENESIS'));
-      this.prevHash = '0x' + bytesToHex(genesisBytes);
+      const genesisBytes = keccak_256(utf8ToBytes("SEALEDBID_GENESIS"));
+      this.prevHash = "0x" + bytesToHex(genesisBytes);
     }
   }
 
@@ -20,10 +20,10 @@ export class AuditChain {
   append(eventType: string, payload: object): { eventHash: string; prevHash: string } {
     const currentPrev = this.prevHash;
     const canonicalPayload = JSON.stringify(makeCanonical(payload));
-    const dataToHash = currentPrev + eventType + canonicalPayload;
+    const dataToHash = currentPrev + "|" + eventType + "|" + canonicalPayload;
 
     const hashBytes = keccak_256(utf8ToBytes(dataToHash));
-    const eventHash = '0x' + bytesToHex(hashBytes);
+    const eventHash = "0x" + bytesToHex(hashBytes);
 
     this.prevHash = eventHash;
 
@@ -42,7 +42,7 @@ export class AuditChain {
       eventType: string;
       payload: object;
       eventHash: string;
-    }>
+    }>,
   ): boolean {
     if (!Array.isArray(events)) {
       return false;
@@ -56,8 +56,8 @@ export class AuditChain {
 
       // Recompute and verify eventHash
       const canonicalPayload = JSON.stringify(makeCanonical(event.payload));
-      const dataToHash = event.prevHash + event.eventType + canonicalPayload;
-      const expectedHash = '0x' + bytesToHex(keccak_256(utf8ToBytes(dataToHash)));
+      const dataToHash = event.prevHash + "|" + event.eventType + "|" + canonicalPayload;
+      const expectedHash = "0x" + bytesToHex(keccak_256(utf8ToBytes(dataToHash)));
 
       if (event.eventHash !== expectedHash) {
         return false;

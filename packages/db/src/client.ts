@@ -1,13 +1,14 @@
-import { PrismaClient } from '@prisma/client';
-import { createCommitment } from '@sealedbid/crypto';
+import { PrismaClient } from "@prisma/client";
+import { createCommitment } from "@sealedbid/crypto";
+import { AsyncLocalStorage } from "async_hooks";
 
 // Custom error to mimic Prisma Raw Query / Constraint Errors
 class PrismaConstraintError extends Error {
-  code = 'P2010';
+  code = "P2010";
   meta: any;
   constructor(message: string) {
     super(message);
-    this.name = 'PrismaClientKnownRequestError';
+    this.name = "PrismaClientKnownRequestError";
     this.meta = { message };
   }
 }
@@ -15,10 +16,10 @@ class PrismaConstraintError extends Error {
 const realPrisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'postgresql://sealedbid:sealedbid@localhost:5432/sealedbid',
+      url: process.env.DATABASE_URL || "postgresql://sealedbid:sealedbid@localhost:5432/sealedbid",
     },
   },
-  log: ['error'],
+  log: ["error"],
 });
 
 const globalAny = globalThis as any;
@@ -37,7 +38,6 @@ if (!globalAny.__mockDb) {
 }
 export const mockDb = globalAny.__mockDb;
 
-
 // Check database reachability synchronously/lazily on first request
 let isDbReachable: boolean | null = null;
 
@@ -47,84 +47,108 @@ async function checkConnection() {
     // Fast ping
     await Promise.race([
       realPrisma.$connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 50)),
     ]);
     isDbReachable = true;
-    console.log('🧪 SealedBid Client: Connected to PostgreSQL.');
+    console.log("🧪 SealedBid Client: Connected to PostgreSQL.");
   } catch (e) {
     isDbReachable = false;
-    console.log('🧪 SealedBid Client: PostgreSQL offline. Enabling transparent Sandbox Mock DB.');
+    console.log("🧪 SealedBid Client: PostgreSQL offline. Enabling transparent Sandbox Mock DB.");
   }
   return isDbReachable;
 }
 
-function makeMockCuid(prefix = 'c') {
+// Eagerly trigger connection check in background to populate isDbReachable
+checkConnection().catch(() => {});
+
+function makeMockCuid(prefix = "c") {
   // Conforms to Zod's .cuid() regex: starts with c, alphanumeric, length 25
   const randomPart = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   return (prefix + randomPart).slice(0, 25).toLowerCase();
 }
 
 if (!globalAny.__mockRlsContext) {
-  globalAny.__mockRlsContext = {
-    currentUserId: null,
-    currentOrgId: null,
-  };
+  globalAny.__mockRlsContext = new AsyncLocalStorage<{ currentUserId: string | null; currentOrgId: string | null }>();
 }
 export const mockRlsContext = globalAny.__mockRlsContext;
 
 function mockCheckUserRls(user: any): boolean {
-  if (!mockRlsContext.currentOrgId) return true;
-  return user.orgId === mockRlsContext.currentOrgId;
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentOrgId) return true;
+  return user.orgId === store.currentOrgId;
 }
 
 function mockCheckTenderRls(tender: any): boolean {
-  if (!mockRlsContext.currentOrgId) return true;
-  return tender.orgId === mockRlsContext.currentOrgId;
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentOrgId && !store.currentUserId) return true;
+
+  // Enterprise owner sees all their tenders
+  if (tender.orgId === store.currentOrgId) return true;
+
+  // Vendors can see published tenders globally
+  if (store.currentUserId) {
+    const user = mockDb.users.find((u: any) => u.id === store.currentUserId);
+    if (user && user.role === "VENDOR") {
+      if (["OPEN", "SEALED", "REVEALED", "AWARDED"].includes(tender.status)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function mockCheckBidRls(bid: any): boolean {
-  if (!mockRlsContext.currentUserId) return true;
-  const user = mockDb.users.find((u) => u.id === mockRlsContext.currentUserId);
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentUserId && !store.currentOrgId) return true;
+
+  const user = mockDb.users.find((u: any) => u.id === store.currentUserId);
   if (!user) return false;
-  
+
+  // Vendor sees their own bids
   if (bid.vendorId === user.id) return true;
-  
-  if (['PROCUREMENT_MANAGER', 'AUDITOR', 'ORG_ADMIN'].includes(user.role)) {
-    const tender = mockDb.tenders.find((t) => t.id === bid.tenderId);
+
+  // Enterprise sees bids submitted to their own tenders
+  if (["PROCUREMENT_MANAGER", "AUDITOR", "ORG_ADMIN"].includes(user.role)) {
+    const tender = mockDb.tenders.find((t: any) => t.id === bid.tenderId);
     if (tender && tender.orgId === user.orgId) return true;
   }
-  
+
   return false;
 }
 
 function mockCheckWebhookRls(webhook: any): boolean {
-  if (!mockRlsContext.currentOrgId) return true;
-  return webhook.orgId === mockRlsContext.currentOrgId;
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentOrgId) return true;
+  return webhook.orgId === store.currentOrgId;
 }
 
 function mockCheckWebhookDeliveryRls(delivery: any): boolean {
-  if (!mockRlsContext.currentOrgId) return true;
-  const webhook = mockDb.webhooks.find((w) => w.id === delivery.webhookId);
-  return webhook ? webhook.orgId === mockRlsContext.currentOrgId : false;
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentOrgId) return true;
+  const webhook = mockDb.webhooks.find((w: any) => w.id === delivery.webhookId);
+  return webhook ? webhook.orgId === store.currentOrgId : false;
 }
 
 function mockCheckTenderDocumentRls(doc: any): boolean {
-  if (!mockRlsContext.currentOrgId) return true;
-  const tender = mockDb.tenders.find((t) => t.id === doc.tenderId);
-  return tender ? tender.orgId === mockRlsContext.currentOrgId : false;
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentOrgId) return true;
+  const tender = mockDb.tenders.find((t: any) => t.id === doc.tenderId);
+  return tender ? tender.orgId === store.currentOrgId : false;
 }
 
 function mockCheckBidWithdrawalRls(withdrawal: any): boolean {
-  if (!mockRlsContext.currentUserId) return true;
-  const user = mockDb.users.find((u) => u.id === mockRlsContext.currentUserId);
+  const store = mockRlsContext.getStore() || {};
+  if (!store.currentUserId) return true;
+  const user = mockDb.users.find((u: any) => u.id === store.currentUserId);
   if (!user) return false;
-  const bid = mockDb.bids.find((b) => b.id === withdrawal.bidId);
+  const bid = mockDb.bids.find((b: any) => b.id === withdrawal.bidId);
   if (!bid) return false;
   // Vendor: own bids only
   if (bid.vendorId === user.id) return true;
   // Manager/Auditor/Admin: same org as tender
-  if (['PROCUREMENT_MANAGER', 'AUDITOR', 'ORG_ADMIN'].includes(user.role)) {
-    const tender = mockDb.tenders.find((t) => t.id === bid.tenderId);
+  if (["PROCUREMENT_MANAGER", "AUDITOR", "ORG_ADMIN"].includes(user.role)) {
+    const tender = mockDb.tenders.find((t: any) => t.id === bid.tenderId);
     if (tender && tender.orgId === user.orgId) return true;
   }
   return false;
@@ -137,11 +161,7 @@ const mockPrisma = {
     return await fn(mockPrisma);
   },
   $executeRawUnsafe: async (sql: string) => {
-    const userMatch = sql.match(/SET LOCAL app\.current_user_id\s*=\s*'([^']+)'/i);
-    if (userMatch) mockRlsContext.currentUserId = userMatch[1];
-    
-    const orgMatch = sql.match(/SET LOCAL app\.current_org_id\s*=\s*'([^']+)'/i);
-    if (orgMatch) mockRlsContext.currentOrgId = orgMatch[1];
+    // Left empty because context is handled by AsyncLocalStorage in rls.ts
   },
   $queryRawUnsafe: async (sql: string, ...values: any[]) => {
     return [];
@@ -156,7 +176,10 @@ const mockPrisma = {
       const org = mockDb.orgs.find((o) => o.id === args.where.id);
       return org || null;
     },
-    deleteMany: async () => { mockDb.orgs = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.orgs = [];
+      return { count: 0 };
+    },
   },
   user: {
     create: async (args: any) => {
@@ -165,7 +188,7 @@ const mockPrisma = {
       return user;
     },
     findUnique: async (args: any) => {
-      const user = mockDb.users.find((u) => u.id === args.where.id || u.email === args.where.email);
+      const user = mockDb.users.find((u: any) => u.id === args.where.id || u.emailHash === args.where.emailHash);
       if (!user) return null;
       if (!mockCheckUserRls(user)) return null;
       return user;
@@ -180,13 +203,16 @@ const mockPrisma = {
       }
       return filtered.filter(mockCheckUserRls);
     },
-    deleteMany: async () => { mockDb.users = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.users = [];
+      return { count: 0 };
+    },
   },
   tender: {
     create: async (args: any) => {
       const tender = {
         id: args.data.id || makeMockCuid(),
-        status: 'DRAFT',
+        status: "DRAFT",
         createdAt: new Date(),
         updatedAt: new Date(),
         bids: [],
@@ -197,10 +223,14 @@ const mockPrisma = {
     },
     update: async (args: any) => {
       const tender = mockDb.tenders.find((t) => t.id === args.where.id);
-      if (!tender) throw new Error('Tender not found');
-      if (!mockCheckTenderRls(tender)) throw new Error('Tender access forbidden by RLS');
-      if (tender.status === 'OPEN' && args.data.revealTime && new Date(args.data.revealTime).getTime() !== new Date(tender.revealTime).getTime()) {
-        throw new PrismaConstraintError('Cannot edit revealTime after tender is OPEN');
+      if (!tender) throw new Error("Tender not found");
+      if (!mockCheckTenderRls(tender)) throw new Error("Tender access forbidden by RLS");
+      if (
+        tender.status === "OPEN" &&
+        args.data.revealTime &&
+        new Date(args.data.revealTime).getTime() !== new Date(tender.revealTime).getTime()
+      ) {
+        throw new PrismaConstraintError("Cannot edit revealTime after tender is OPEN");
       }
       Object.assign(tender, args.data);
       tender.updatedAt = new Date();
@@ -225,9 +255,9 @@ const mockPrisma = {
         filtered = filtered.filter((t) => {
           for (const key of Object.keys(args.where)) {
             const cond = args.where[key];
-            if (cond && typeof cond === 'object') {
-              if ('lte' in cond && t[key].getTime() > new Date(cond.lte).getTime()) return false;
-              if ('gt' in cond && t[key].getTime() <= new Date(cond.gt).getTime()) return false;
+            if (cond && typeof cond === "object") {
+              if ("lte" in cond && t[key].getTime() > new Date(cond.lte).getTime()) return false;
+              if ("gt" in cond && t[key].getTime() <= new Date(cond.gt).getTime()) return false;
             } else if (t[key] !== cond) {
               return false;
             }
@@ -240,12 +270,14 @@ const mockPrisma = {
     },
     updateMany: async (args: any) => {
       let count = 0;
-      const tendersToUpdate = mockDb.tenders.filter((t) => {
-        if (args.where.id && t.id !== args.where.id) return false;
-        if (args.where.status && t.status !== args.where.status) return false;
-        return true;
-      }).filter(mockCheckTenderRls);
-      
+      const tendersToUpdate = mockDb.tenders
+        .filter((t) => {
+          if (args.where.id && t.id !== args.where.id) return false;
+          if (args.where.status && t.status !== args.where.status) return false;
+          return true;
+        })
+        .filter(mockCheckTenderRls);
+
       for (const t of tendersToUpdate) {
         Object.assign(t, args.data);
         t.updatedAt = new Date();
@@ -253,15 +285,20 @@ const mockPrisma = {
       }
       return { count };
     },
-    deleteMany: async () => { mockDb.tenders = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.tenders = [];
+      return { count: 0 };
+    },
   },
   bid: {
     create: async (args: any) => {
       const tender = mockDb.tenders.find((t) => t.id === args.data.tenderId);
-      if (!tender) throw new Error('Tender not found');
+      if (!tender) throw new Error("Tender not found");
       if (args.data.plaintextBid !== null && args.data.plaintextBid !== undefined) {
         if (new Date().getTime() < new Date(tender.revealTime).getTime()) {
-          throw new PrismaConstraintError(`Cannot store plaintextBid before revealTime ${new Date(tender.revealTime).toISOString()}`);
+          throw new PrismaConstraintError(
+            `Cannot store plaintextBid before revealTime ${new Date(tender.revealTime).toISOString()}`,
+          );
         }
       }
       const bid = {
@@ -276,13 +313,15 @@ const mockPrisma = {
     },
     update: async (args: any) => {
       const bid = mockDb.bids.find((b) => b.id === args.where.id);
-      if (!bid) throw new Error('Bid not found');
-      if (!mockCheckBidRls(bid)) throw new Error('Bid access forbidden by RLS');
+      if (!bid) throw new Error("Bid not found");
+      if (!mockCheckBidRls(bid)) throw new Error("Bid access forbidden by RLS");
       const tender = mockDb.tenders.find((t) => t.id === bid.tenderId);
-      if (!tender) throw new Error('Tender not found');
+      if (!tender) throw new Error("Tender not found");
       if (args.data.plaintextBid !== null && args.data.plaintextBid !== undefined) {
         if (new Date().getTime() < new Date(tender.revealTime).getTime()) {
-          throw new PrismaConstraintError(`Cannot store plaintextBid before revealTime ${new Date(tender.revealTime).toISOString()}`);
+          throw new PrismaConstraintError(
+            `Cannot store plaintextBid before revealTime ${new Date(tender.revealTime).toISOString()}`,
+          );
         }
       }
       Object.assign(bid, args.data);
@@ -302,7 +341,10 @@ const mockPrisma = {
       }
       return filtered.filter(mockCheckBidRls);
     },
-    deleteMany: async () => { mockDb.bids = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.bids = [];
+      return { count: 0 };
+    },
   },
   auditLog: {
     create: async (args: any) => {
@@ -320,7 +362,7 @@ const mockPrisma = {
         filtered = filtered.filter((l) => l.tenderId === args.where.tenderId);
       }
       if (args?.orderBy) {
-        if (args.orderBy.id === 'desc') {
+        if (args.orderBy.id === "desc") {
           filtered = [...filtered].sort((a, b) => Number(b.id - a.id));
         }
       }
@@ -331,14 +373,21 @@ const mockPrisma = {
       if (args?.where?.tenderId) {
         filtered = filtered.filter((l) => l.tenderId === args.where.tenderId);
       }
-      if (args?.orderBy?.createdAt === 'asc') {
-        filtered = [...filtered].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      } else if (args?.orderBy?.createdAt === 'desc') {
-        filtered = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      if (args?.orderBy?.createdAt === "asc") {
+        filtered = [...filtered].sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+      } else if (args?.orderBy?.createdAt === "desc") {
+        filtered = [...filtered].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
       }
       return filtered;
     },
-    deleteMany: async () => { mockDb.auditLogs = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.auditLogs = [];
+      return { count: 0 };
+    },
   },
   webhook: {
     create: async (args: any) => {
@@ -365,11 +414,14 @@ const mockPrisma = {
     },
     update: async (args: any) => {
       const webhook = mockDb.webhooks.find((w) => w.id === args.where.id);
-      if (!webhook || !mockCheckWebhookRls(webhook)) throw new Error('Webhook not found');
+      if (!webhook || !mockCheckWebhookRls(webhook)) throw new Error("Webhook not found");
       Object.assign(webhook, args.data);
       return webhook;
     },
-    deleteMany: async () => { mockDb.webhooks = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.webhooks = [];
+      return { count: 0 };
+    },
   },
   webhookDelivery: {
     create: async (args: any) => {
@@ -389,7 +441,10 @@ const mockPrisma = {
       }
       return filtered.filter(mockCheckWebhookDeliveryRls);
     },
-    deleteMany: async () => { mockDb.webhookDeliveries = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.webhookDeliveries = [];
+      return { count: 0 };
+    },
   },
 
   // ─── TenderDocument ────────────────────────────────────────────────────────
@@ -415,14 +470,17 @@ const mockPrisma = {
       if (!doc || !mockCheckTenderDocumentRls(doc)) return null;
       return doc;
     },
-    deleteMany: async () => { mockDb.tenderDocuments = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.tenderDocuments = [];
+      return { count: 0 };
+    },
   },
 
   // ─── BidWithdrawal ─────────────────────────────────────────────────────────
   bidWithdrawal: {
     create: async (args: any) => {
       const existing = mockDb.bidWithdrawals.find((w) => w.bidId === args.data.bidId);
-      if (existing) throw new Error('BidWithdrawal: bidId already exists (unique constraint)');
+      if (existing) throw new Error("BidWithdrawal: bidId already exists (unique constraint)");
       const withdrawal = {
         id: args.data.id || makeMockCuid(),
         withdrawnAt: new Date(),
@@ -445,16 +503,19 @@ const mockPrisma = {
       }
       return filtered.filter(mockCheckBidWithdrawalRls);
     },
-    deleteMany: async () => { mockDb.bidWithdrawals = []; return { count: 0 }; },
+    deleteMany: async () => {
+      mockDb.bidWithdrawals = [];
+      return { count: 0 };
+    },
   },
 };
 
 // Create the dynamic client Proxy
 export const prisma = new Proxy({} as typeof realPrisma, {
   get(target, prop) {
-    if (prop === 'then') return undefined; // avoid promise-like resolution
-    if (prop === 'isDbReachable') return isDbReachable;
-    
+    if (prop === "then") return undefined; // avoid promise-like resolution
+    if (prop === "isDbReachable") return isDbReachable;
+
     // We intercept calls to direct methods of PrismaClient
     const isMock = isDbReachable === false;
     const client = isMock ? mockPrisma : realPrisma;
@@ -467,7 +528,7 @@ export const prisma = new Proxy({} as typeof realPrisma, {
           return checkConnection().then((connected) => {
             const activeClient = connected ? realPrisma : mockPrisma;
             const targetMethod = (activeClient as any)[prop];
-            if (typeof targetMethod === 'function') {
+            if (typeof targetMethod === "function") {
               return Reflect.apply(targetMethod, activeClient, argumentsList);
             }
             return targetMethod;
@@ -482,7 +543,7 @@ export const prisma = new Proxy({} as typeof realPrisma, {
               return Reflect.apply(targetMethod, targetModel, args);
             });
           };
-        }
+        },
       });
     }
 
@@ -491,5 +552,4 @@ export const prisma = new Proxy({} as typeof realPrisma, {
 }) as any;
 
 export default prisma;
-export * from './rls.js';
-
+export * from "./rls.js";

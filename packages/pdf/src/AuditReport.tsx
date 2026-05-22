@@ -1,58 +1,53 @@
-import React from 'react';
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Font,
-} from '@react-pdf/renderer';
+import React from "react";
+import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 
 // Register Helvetica as Satoshi for rendering safety
 Font.register({
-  family: 'Satoshi',
+  family: "Satoshi",
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZg.ttf' }, // fallback load standard font
+    {
+      src: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZg.ttf",
+    }, // fallback load standard font
   ],
 });
 
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    fontFamily: 'Helvetica',
+    fontFamily: "Helvetica",
     fontSize: 9,
-    color: '#1F2937',
+    color: "#1F2937",
     lineHeight: 1.4,
   },
   // Cover Page Styles
   coverPage: {
     padding: 60,
-    fontFamily: 'Helvetica',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    height: '100%',
+    fontFamily: "Helvetica",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    height: "100%",
   },
   headerRow: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderBottomWidth: 2,
-    borderBottomColor: '#D97706',
+    borderBottomColor: "#D97706",
     paddingBottom: 15,
   },
   logoText: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 18,
-    color: '#D97706',
+    color: "#D97706",
     letterSpacing: 1,
   },
   docTitle: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 10,
-    color: '#4B5563',
-    textTransform: 'uppercase',
+    color: "#4B5563",
+    textTransform: "uppercase",
   },
   coverBody: {
     marginTop: 80,
@@ -60,125 +55,125 @@ const styles = StyleSheet.create({
   },
   coverSubTitle: {
     fontSize: 12,
-    color: '#D97706',
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
+    color: "#D97706",
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
     marginBottom: 10,
   },
   coverMainTitle: {
     fontSize: 28,
-    fontFamily: 'Helvetica-Bold',
-    color: '#111827',
+    fontFamily: "Helvetica-Bold",
+    color: "#111827",
     marginBottom: 20,
     lineHeight: 1.2,
   },
   coverMetaBlock: {
     marginTop: 40,
     borderLeftWidth: 3,
-    borderLeftColor: '#D97706',
+    borderLeftColor: "#D97706",
     paddingLeft: 15,
   },
   metaLabel: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
-    color: '#6B7280',
-    textTransform: 'uppercase',
+    fontFamily: "Helvetica-Bold",
+    color: "#6B7280",
+    textTransform: "uppercase",
     marginBottom: 4,
   },
   metaValue: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: '#111827',
+    fontFamily: "Helvetica-Bold",
+    color: "#111827",
     marginBottom: 12,
   },
   coverFooter: {
     fontSize: 8,
-    color: '#9CA3AF',
-    textAlign: 'center',
+    color: "#9CA3AF",
+    textAlign: "center",
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: "#E5E7EB",
     paddingTop: 15,
   },
   // Section Styles
   sectionTitle: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 12,
-    color: '#D97706',
+    color: "#D97706",
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: "#F3F4F6",
     paddingBottom: 5,
     marginTop: 20,
     marginBottom: 10,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   table: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: 'auto',
+    display: "flex",
+    flexDirection: "column",
+    width: "auto",
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
   },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
+    flexDirection: "row",
+    backgroundColor: "#F9FAFB",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
     padding: 6,
   },
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
     padding: 6,
   },
   tableHeaderCell: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 8,
-    color: '#374151',
+    color: "#374151",
   },
   tableCell: {
     fontSize: 8,
-    color: '#4B5563',
+    color: "#4B5563",
   },
   badgeValid: {
-    color: '#059669',
-    fontFamily: 'Helvetica-Bold',
+    color: "#059669",
+    fontFamily: "Helvetica-Bold",
   },
   badgeInvalid: {
-    color: '#DC2626',
-    fontFamily: 'Helvetica-Bold',
+    color: "#DC2626",
+    fontFamily: "Helvetica-Bold",
   },
   badgePending: {
-    color: '#D97706',
-    fontFamily: 'Helvetica-Bold',
+    color: "#D97706",
+    fontFamily: "Helvetica-Bold",
   },
   instructionText: {
     fontSize: 8,
-    color: '#4B5563',
-    backgroundColor: '#F9FAFB',
+    color: "#4B5563",
+    backgroundColor: "#F9FAFB",
     padding: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    fontFamily: 'Courier',
+    borderColor: "#E5E7EB",
+    fontFamily: "Courier",
     lineHeight: 1.4,
   },
   pageFooter: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 25,
     left: 40,
     right: 40,
     fontSize: 7,
-    color: '#9CA3AF',
+    color: "#9CA3AF",
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: "#E5E7EB",
     paddingTop: 8,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   footerRight: {
-    textAlign: 'right',
+    textAlign: "right",
   },
 });
 
@@ -214,7 +209,7 @@ export const AuditReport: React.FC<AuditReportProps> = ({
   org,
   bids,
   auditLogs,
-  pdfHash = 'PENDING_SHA256',
+  pdfHash = "PENDING_SHA256",
 }) => {
   const formatTime = (time: string | Date) => {
     return new Date(time).toISOString();
@@ -246,7 +241,7 @@ export const AuditReport: React.FC<AuditReportProps> = ({
             <Text style={styles.metaValue}>{formatTime(tender.revealTime)}</Text>
 
             <Text style={styles.metaLabel}>Merkle Root</Text>
-            <Text style={styles.metaValue}>{tender.merkleRoot || 'N/A'}</Text>
+            <Text style={styles.metaValue}>{tender.merkleRoot || "N/A"}</Text>
           </View>
         </View>
 
@@ -264,35 +259,59 @@ export const AuditReport: React.FC<AuditReportProps> = ({
 
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <View style={{ width: '25%' }}><Text style={styles.tableHeaderCell}>Vendor Hash</Text></View>
-            <View style={{ width: '45%' }}><Text style={styles.tableHeaderCell}>Commitment</Text></View>
-            <View style={{ width: '15%' }}><Text style={styles.tableHeaderCell}>Value</Text></View>
-            <View style={{ width: '15%' }}><Text style={styles.tableHeaderCell}>Status</Text></View>
+            <View style={{ width: "25%" }}>
+              <Text style={styles.tableHeaderCell}>Vendor Hash</Text>
+            </View>
+            <View style={{ width: "45%" }}>
+              <Text style={styles.tableHeaderCell}>Commitment</Text>
+            </View>
+            <View style={{ width: "15%" }}>
+              <Text style={styles.tableHeaderCell}>Value</Text>
+            </View>
+            <View style={{ width: "15%" }}>
+              <Text style={styles.tableHeaderCell}>Status</Text>
+            </View>
           </View>
 
           {bids.map((bid, i) => {
-            let statusText = 'PENDING';
+            let statusText = "PENDING";
             let statusStyle = styles.badgePending;
             if (bid.isValid === true) {
-              statusText = 'VALIDATED';
+              statusText = "VALIDATED";
               statusStyle = styles.badgeValid;
             } else if (bid.isValid === false) {
-              statusText = 'DISPUTED';
+              statusText = "DISPUTED";
               statusStyle = styles.badgeInvalid;
             }
 
-            let bidPrice = 'SEALED';
+            let bidPrice = "SEALED";
             if (bid.plaintextBid) {
-              const parsed = typeof bid.plaintextBid === 'string' ? JSON.parse(bid.plaintextBid) : bid.plaintextBid;
-              bidPrice = parsed.price !== undefined ? `$${parsed.price}` : parsed.unitPrice !== undefined ? `$${parsed.unitPrice * (parsed.qty || 1)}` : 'REVEALED';
+              const parsed =
+                typeof bid.plaintextBid === "string"
+                  ? JSON.parse(bid.plaintextBid)
+                  : bid.plaintextBid;
+              bidPrice =
+                parsed.price !== undefined
+                  ? `$${parsed.price}`
+                  : parsed.unitPrice !== undefined
+                    ? `$${parsed.unitPrice * (parsed.qty || 1)}`
+                    : "REVEALED";
             }
 
             return (
               <View key={i} style={styles.tableRow}>
-                <View style={{ width: '25%' }}><Text style={styles.tableCell}>{bid.vendorHash.slice(0, 12)}...</Text></View>
-                <View style={{ width: '45%' }}><Text style={styles.tableCell}>{bid.commitment.slice(0, 24)}...</Text></View>
-                <View style={{ width: '15%' }}><Text style={styles.tableCell}>{bidPrice}</Text></View>
-                <View style={{ width: '15%' }}><Text style={[styles.tableCell, statusStyle]}>{statusText}</Text></View>
+                <View style={{ width: "25%" }}>
+                  <Text style={styles.tableCell}>{bid.vendorHash.slice(0, 12)}...</Text>
+                </View>
+                <View style={{ width: "45%" }}>
+                  <Text style={styles.tableCell}>{bid.commitment.slice(0, 24)}...</Text>
+                </View>
+                <View style={{ width: "15%" }}>
+                  <Text style={styles.tableCell}>{bidPrice}</Text>
+                </View>
+                <View style={{ width: "15%" }}>
+                  <Text style={[styles.tableCell, statusStyle]}>{statusText}</Text>
+                </View>
               </View>
             );
           })}
@@ -300,14 +319,20 @@ export const AuditReport: React.FC<AuditReportProps> = ({
 
         <Text style={styles.sectionTitle}>Client Verification Instructions</Text>
         <View style={styles.instructionText}>
-          <Text>To audit this tender locally and verify proof integrity with zero-trust in the server:</Text>
-          <Text style={{ marginTop: 4 }}>1. Install the CLI client: npm install -g @sealedbid/cli</Text>
+          <Text>
+            To audit this tender locally and verify proof integrity with zero-trust in the server:
+          </Text>
+          <Text style={{ marginTop: 4 }}>
+            1. Install the CLI client: npm install -g @sealedbid/cli
+          </Text>
           <Text>2. Run verification tool: sealedbid-verify {tender.id}</Text>
-          <Text>3. Verify the computed Merkle Root matches: {tender.merkleRoot || 'N/A'}</Text>
+          <Text>3. Verify the computed Merkle Root matches: {tender.merkleRoot || "N/A"}</Text>
         </View>
 
         <View style={styles.pageFooter}>
-          <Text>Verify at {verifyUrl} | SHA256: {pdfHash}</Text>
+          <Text>
+            Verify at {verifyUrl} | SHA256: {pdfHash}
+          </Text>
           <Text style={styles.footerRight}>Page 2</Text>
         </View>
       </Page>
@@ -318,24 +343,42 @@ export const AuditReport: React.FC<AuditReportProps> = ({
 
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <View style={{ width: '25%' }}><Text style={styles.tableHeaderCell}>Timestamp</Text></View>
-            <View style={{ width: '25%' }}><Text style={styles.tableHeaderCell}>Event Type</Text></View>
-            <View style={{ width: '25%' }}><Text style={styles.tableHeaderCell}>Event Hash</Text></View>
-            <View style={{ width: '25%' }}><Text style={styles.tableHeaderCell}>Previous Hash</Text></View>
+            <View style={{ width: "25%" }}>
+              <Text style={styles.tableHeaderCell}>Timestamp</Text>
+            </View>
+            <View style={{ width: "25%" }}>
+              <Text style={styles.tableHeaderCell}>Event Type</Text>
+            </View>
+            <View style={{ width: "25%" }}>
+              <Text style={styles.tableHeaderCell}>Event Hash</Text>
+            </View>
+            <View style={{ width: "25%" }}>
+              <Text style={styles.tableHeaderCell}>Previous Hash</Text>
+            </View>
           </View>
 
           {auditLogs.map((log, i) => (
             <View key={i} style={styles.tableRow}>
-              <View style={{ width: '25%' }}><Text style={styles.tableCell}>{formatTime(log.createdAt)}</Text></View>
-              <View style={{ width: '25%' }}><Text style={styles.tableCell}>{log.eventType}</Text></View>
-              <View style={{ width: '25%' }}><Text style={styles.tableCell}>{log.eventHash.slice(0, 16)}...</Text></View>
-              <View style={{ width: '25%' }}><Text style={styles.tableCell}>{log.prevHash.slice(0, 16)}...</Text></View>
+              <View style={{ width: "25%" }}>
+                <Text style={styles.tableCell}>{formatTime(log.createdAt)}</Text>
+              </View>
+              <View style={{ width: "25%" }}>
+                <Text style={styles.tableCell}>{log.eventType}</Text>
+              </View>
+              <View style={{ width: "25%" }}>
+                <Text style={styles.tableCell}>{log.eventHash.slice(0, 16)}...</Text>
+              </View>
+              <View style={{ width: "25%" }}>
+                <Text style={styles.tableCell}>{log.prevHash.slice(0, 16)}...</Text>
+              </View>
             </View>
           ))}
         </View>
 
         <View style={styles.pageFooter}>
-          <Text>Verify at {verifyUrl} | SHA256: {pdfHash}</Text>
+          <Text>
+            Verify at {verifyUrl} | SHA256: {pdfHash}
+          </Text>
           <Text style={styles.footerRight}>Page 3</Text>
         </View>
       </Page>

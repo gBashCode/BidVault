@@ -49,9 +49,7 @@ export function VendorSidebar() {
             <div className="mt-2 space-y-0.5">
               {g.items.map((i) => {
                 const isActive =
-                  i.to === "/vendor"
-                    ? currentPath === "/vendor"
-                    : currentPath.startsWith(i.to);
+                  i.to === "/vendor" ? currentPath === "/vendor" : currentPath.startsWith(i.to);
                 return (
                   <Link
                     key={i.l}

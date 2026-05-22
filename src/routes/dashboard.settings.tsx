@@ -6,8 +6,11 @@ import { Switch } from "@/components/ui/switch";
 export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — SealedBid" },
-      { name: "description", content: "Configure workspace settings, security policies, notifications, and API access." },
+      { title: "Settings — BidVault" },
+      {
+        name: "description",
+        content: "Configure workspace settings, security policies, notifications, and API access.",
+      },
     ],
   }),
   component: SettingsPage,
@@ -78,8 +81,6 @@ function SettingsPage() {
   );
 }
 
-
-
 /* ── Breadcrumb ──────────────────────────────────────── */
 function Breadcrumb() {
   return (
@@ -96,9 +97,7 @@ function Header() {
   return (
     <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          Workspace settings
-        </h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Workspace settings</h1>
         <div className="mt-1 font-mono text-[11px] text-muted-foreground">
           Configure security policies, notifications, and integration settings for this workspace.
         </div>
@@ -160,7 +159,10 @@ function GeneralSection() {
           className="w-full max-w-xs resize-none rounded-md border border-border bg-surface px-3 py-2 text-[13px] text-foreground outline-none focus:border-primary/50"
         />
       </FieldRow>
-      <FieldRow label="Time zone" description="Used for deadline calculations and audit timestamps.">
+      <FieldRow
+        label="Time zone"
+        description="Used for deadline calculations and audit timestamps."
+      >
         <input
           defaultValue="Europe/Brussels (UTC+1)"
           className="h-9 w-full max-w-xs rounded-md border border-border bg-surface px-3 text-[13px] text-foreground outline-none focus:border-primary/50"
@@ -175,10 +177,16 @@ function GeneralSection() {
 function SecuritySection() {
   return (
     <Section label="Security">
-      <FieldRow label="Enforce MFA" description="Require all members to enable multi-factor authentication.">
+      <FieldRow
+        label="Enforce MFA"
+        description="Require all members to enable multi-factor authentication."
+      >
         <Switch defaultChecked />
       </FieldRow>
-      <FieldRow label="Session timeout" description="Automatically sign out idle users after this duration.">
+      <FieldRow
+        label="Session timeout"
+        description="Automatically sign out idle users after this duration."
+      >
         <div className="flex items-center gap-2">
           <input
             defaultValue="30"
@@ -187,14 +195,20 @@ function SecuritySection() {
           <span className="font-mono text-[11px] text-muted-foreground">minutes</span>
         </div>
       </FieldRow>
-      <FieldRow label="IP allowlist" description="Restrict workspace access to specific IP ranges (CIDR notation).">
+      <FieldRow
+        label="IP allowlist"
+        description="Restrict workspace access to specific IP ranges (CIDR notation)."
+      >
         <textarea
           defaultValue={"10.0.0.0/8\n172.16.0.0/12\n193.190.198.0/24"}
           rows={3}
           className="w-full max-w-xs resize-none rounded-md border border-border bg-surface px-3 py-2 font-mono text-[12px] text-foreground outline-none focus:border-primary/50"
         />
       </FieldRow>
-      <FieldRow label="Audit log retention" description="Duration to retain detailed audit log entries.">
+      <FieldRow
+        label="Audit log retention"
+        description="Duration to retain detailed audit log entries."
+      >
         <div className="flex items-center gap-2">
           <input
             defaultValue="365"
@@ -203,7 +217,10 @@ function SecuritySection() {
           <span className="font-mono text-[11px] text-muted-foreground">days</span>
         </div>
       </FieldRow>
-      <FieldRow label="Password policy" description="Minimum strength requirements for member passwords.">
+      <FieldRow
+        label="Password policy"
+        description="Minimum strength requirements for member passwords."
+      >
         <span className="inline-flex items-center gap-1.5 rounded-sm bg-success/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-success">
           <span className="h-1.5 w-1.5 rounded-full bg-success" />
           Strong · 12+ chars
@@ -217,25 +234,43 @@ function SecuritySection() {
 function NotificationsSection() {
   return (
     <Section label="Notifications">
-      <FieldRow label="Email alerts" description="Send email notifications for critical tender events.">
+      <FieldRow
+        label="Email alerts"
+        description="Send email notifications for critical tender events."
+      >
         <Switch defaultChecked />
       </FieldRow>
-      <FieldRow label="Bid sealed alerts" description="Notify admins each time a bid envelope is sealed.">
+      <FieldRow
+        label="Bid sealed alerts"
+        description="Notify admins each time a bid envelope is sealed."
+      >
         <Switch defaultChecked />
       </FieldRow>
-      <FieldRow label="Deadline reminders" description="Send reminders 72h, 24h, and 1h before reveal deadlines.">
+      <FieldRow
+        label="Deadline reminders"
+        description="Send reminders 72h, 24h, and 1h before reveal deadlines."
+      >
         <Switch defaultChecked />
       </FieldRow>
-      <FieldRow label="Weekly digest" description="Send a weekly summary of workspace activity every Monday.">
+      <FieldRow
+        label="Weekly digest"
+        description="Send a weekly summary of workspace activity every Monday."
+      >
         <Switch />
       </FieldRow>
-      <FieldRow label="Webhook URL" description="POST event payloads to an external endpoint (JSON).">
+      <FieldRow
+        label="Webhook URL"
+        description="POST event payloads to an external endpoint (JSON)."
+      >
         <input
           defaultValue="https://hooks.fps-mob.be/sealedbid/events"
           className="h-9 w-full max-w-xs rounded-md border border-border bg-surface px-3 font-mono text-[12px] text-foreground outline-none focus:border-primary/50"
         />
       </FieldRow>
-      <FieldRow label="Webhook secret" description="HMAC-SHA256 secret for verifying webhook signatures.">
+      <FieldRow
+        label="Webhook secret"
+        description="HMAC-SHA256 secret for verifying webhook signatures."
+      >
         <div className="flex items-center gap-2">
           <input
             defaultValue="whsec_••••••••••••••••"
@@ -279,8 +314,12 @@ function ApiSection() {
             <tr key={k.key} className="group hover:bg-surface/60">
               <td className="px-5 py-2.5 font-medium">{k.name}</td>
               <td className="px-5 py-2.5 font-mono text-[11px] text-muted-foreground">{k.key}</td>
-              <td className="px-5 py-2.5 font-mono text-[11px] text-muted-foreground">{k.created}</td>
-              <td className="px-5 py-2.5 font-mono text-[11px] text-muted-foreground">{k.lastUsed}</td>
+              <td className="px-5 py-2.5 font-mono text-[11px] text-muted-foreground">
+                {k.created}
+              </td>
+              <td className="px-5 py-2.5 font-mono text-[11px] text-muted-foreground">
+                {k.lastUsed}
+              </td>
               <td className="px-5 py-2.5">
                 <span
                   className={`inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] ${

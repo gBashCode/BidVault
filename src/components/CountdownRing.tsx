@@ -75,12 +75,13 @@ export function CountdownRing({
   const pad = (n: number) => String(n).padStart(2, "0");
 
   const formattedTime =
-    d > 0
-      ? `${pad(d)}:${pad(h)}:${pad(m)}:${pad(s)}`
-      : `${pad(h)}:${pad(m)}:${pad(s)}`;
+    d > 0 ? `${pad(d)}:${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h)}:${pad(m)}:${pad(s)}`;
 
   return (
-    <div className="relative flex flex-col items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative flex flex-col items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 -rotate-90">
         <circle
           cx={size / 2}

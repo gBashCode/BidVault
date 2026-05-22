@@ -5,9 +5,7 @@ export const Route = createFileRoute("/api/auth/me")({
     handlers: {
       GET: async ({ request }) => {
         const cookieHeader = request.headers.get("cookie") || "";
-        const tokenCookie = cookieHeader
-          .split(";")
-          .find((c) => c.trim().startsWith("token="));
+        const tokenCookie = cookieHeader.split(";").find((c) => c.trim().startsWith("token="));
 
         if (!tokenCookie) {
           return new Response(JSON.stringify(null), {
@@ -16,7 +14,8 @@ export const Route = createFileRoute("/api/auth/me")({
           });
         }
 
-        const token = tokenCookie.split("=")[1];
+        const trimmedCookie = tokenCookie.trim();
+        const token = trimmedCookie.substring(trimmedCookie.indexOf("=") + 1);
         try {
           const [, payloadB64] = token.split(".");
           const payloadString = Buffer.from(payloadB64, "base64url").toString("utf-8");

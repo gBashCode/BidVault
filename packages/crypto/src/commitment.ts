@@ -1,11 +1,11 @@
-import { keccak_256 } from '@noble/hashes/sha3';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
+import { keccak_256 } from "@noble/hashes/sha3";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
 
 /**
  * Recursively sorts all keys of an object to ensure deterministic JSON serialization.
  */
 export function makeCanonical(val: any): any {
-  if (val === null || typeof val !== 'object') {
+  if (val === null || typeof val !== "object") {
     return val;
   }
   if (Array.isArray(val)) {
@@ -26,8 +26,8 @@ export function makeCanonical(val: any): any {
  * @returns 0x-prefixed hex string of 64 characters (after the 0x)
  */
 export function createCommitment(data: object, salt: string): string {
-  if (typeof salt !== 'string' || salt.length < 32) {
-    throw new Error('Salt must be at least 32 characters long');
+  if (typeof salt !== "string" || salt.length < 32) {
+    throw new Error("Salt must be at least 32 characters long");
   }
 
   const canonical = makeCanonical(data);
@@ -35,7 +35,7 @@ export function createCommitment(data: object, salt: string): string {
   const dataToHash = canonicalString + salt;
 
   const hashBytes = keccak_256(utf8ToBytes(dataToHash));
-  return '0x' + bytesToHex(hashBytes);
+  return "0x" + bytesToHex(hashBytes);
 }
 
 /**
@@ -60,7 +60,7 @@ function safeCompare(a: string, b: string): boolean {
  * @returns True if the commitment is valid, false otherwise
  */
 export function verifyCommitment(data: object, salt: string, commitment: string): boolean {
-  if (typeof commitment !== 'string') {
+  if (typeof commitment !== "string") {
     return false;
   }
 

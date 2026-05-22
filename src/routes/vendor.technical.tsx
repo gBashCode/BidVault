@@ -6,10 +6,30 @@ export const Route = createFileRoute("/vendor/technical")({
 
 function VendorTechnicalRoute() {
   const requirements = [
-    { id: "REQ-01", title: "Asphalt Composition", description: "Polymer-modified bitumen (PMB) matching EN 14023 standards.", status: "Acknowledged" },
-    { id: "REQ-02", title: "Load Bearing Capacity", description: "Minimum of 45 MPa unconfined compressive strength.", status: "Acknowledged" },
-    { id: "REQ-03", title: "Drainage Gradient", description: "Minimum 2% cross-fall across all main carriageways.", status: "Pending Review" },
-    { id: "REQ-04", title: "Environmental Offset", description: "CO2 emission tracking per ton of material laid.", status: "Pending Review" },
+    {
+      id: "REQ-01",
+      title: "Asphalt Composition",
+      description: "Polymer-modified bitumen (PMB) matching EN 14023 standards.",
+      status: "Acknowledged",
+    },
+    {
+      id: "REQ-02",
+      title: "Load Bearing Capacity",
+      description: "Minimum of 45 MPa unconfined compressive strength.",
+      status: "Acknowledged",
+    },
+    {
+      id: "REQ-03",
+      title: "Drainage Gradient",
+      description: "Minimum 2% cross-fall across all main carriageways.",
+      status: "Pending Review",
+    },
+    {
+      id: "REQ-04",
+      title: "Environmental Offset",
+      description: "CO2 emission tracking per ton of material laid.",
+      status: "Pending Review",
+    },
   ];
 
   return (
@@ -21,12 +41,10 @@ function VendorTechnicalRoute() {
         <span>/</span>
         <span className="text-foreground">Technical Annex</span>
       </div>
-      
+
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Technical Annex
-          </h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Technical Annex</h1>
           <div className="mt-1 font-mono text-[11px] text-muted-foreground">
             Specific engineering and environmental parameters for GOV-2026-ROAD-INFRA-014.
           </div>
@@ -50,13 +68,21 @@ function VendorTechnicalRoute() {
             <tbody className="divide-y divide-border/50">
               {requirements.map((req) => (
                 <tr key={req.id} className="hover:bg-surface/40 transition-colors">
-                  <td className="px-4 py-4 font-mono text-[11px] text-primary whitespace-nowrap">{req.id}</td>
+                  <td className="px-4 py-4 font-mono text-[11px] text-primary whitespace-nowrap">
+                    {req.id}
+                  </td>
                   <td className="px-4 py-4 font-medium text-foreground">{req.title}</td>
-                  <td className="px-4 py-4 text-muted-foreground text-[12.5px]">{req.description}</td>
+                  <td className="px-4 py-4 text-muted-foreground text-[12.5px]">
+                    {req.description}
+                  </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap">
-                    <span className={`inline-flex items-center font-mono text-[10px] uppercase tracking-[0.1em] px-2 py-1 rounded-sm ${
-                      req.status === 'Acknowledged' ? 'bg-success/10 text-success' : 'bg-surface border border-border text-muted-foreground'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center font-mono text-[10px] uppercase tracking-[0.1em] px-2 py-1 rounded-sm ${
+                        req.status === "Acknowledged"
+                          ? "bg-success/10 text-success"
+                          : "bg-surface border border-border text-muted-foreground"
+                      }`}
+                    >
                       {req.status}
                     </span>
                   </td>

@@ -73,11 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SealedBid — Provably Fair Procurement Infrastructure" },
-      { name: "description", content: "Cryptographically sealed bids. Simultaneous reveal. Audit-grade procurement for enterprises and governments." },
-      { name: "author", content: "SealedBid" },
-      { property: "og:title", content: "SealedBid — Provably Fair Procurement" },
-      { property: "og:description", content: "Encrypted vendor bids, simultaneous reveal, cryptographic audit trail." },
+      { title: "BidVault — Provably Fair Procurement Infrastructure" },
+      {
+        name: "description",
+        content:
+          "Cryptographically sealed bids. Simultaneous reveal. Audit-grade procurement for enterprises and governments.",
+      },
+      { name: "author", content: "BidVault" },
+      { property: "og:title", content: "BidVault — Provably Fair Procurement" },
+      {
+        property: "og:description",
+        content: "Encrypted vendor bids, simultaneous reveal, cryptographic audit trail.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },

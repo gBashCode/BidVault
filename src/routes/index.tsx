@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Countdown, CircularCountdown } from "@/components/countdown";
-import { RevealShowcase, SealedBidCard } from "@/components/bid-card";
+import { RevealShowcase, BidVaultCard } from "@/components/bid-card";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -18,9 +18,25 @@ export const Route = createFileRoute("/")({
 const target = new Date(Date.now() + 1000 * 60 * 60 * 47 + 1000 * 73);
 
 const heroBids = [
-  { vendor: "Helios Civil Works AG", ref: "BID-014-A1", hash: "0x8f3e9a21bc4d7e10", amount: "€ 42,180,000" },
-  { vendor: "Stratum Infrastructure", ref: "BID-014-B2", hash: "0x71ca2f08d9bb4c52", amount: "€ 39,920,500", delta: "—" },
-  { vendor: "Northwind Construct", ref: "BID-014-C3", hash: "0xa14b6e9c2d018f77", amount: "€ 44,510,000" },
+  {
+    vendor: "Helios Civil Works AG",
+    ref: "BID-014-A1",
+    hash: "0x8f3e9a21bc4d7e10",
+    amount: "€ 42,180,000",
+  },
+  {
+    vendor: "Stratum Infrastructure",
+    ref: "BID-014-B2",
+    hash: "0x71ca2f08d9bb4c52",
+    amount: "€ 39,920,500",
+    delta: "—",
+  },
+  {
+    vendor: "Northwind Construct",
+    ref: "BID-014-C3",
+    hash: "0xa14b6e9c2d018f77",
+    amount: "€ 44,510,000",
+  },
 ];
 
 function Index() {
@@ -33,7 +49,7 @@ function Index() {
           }
         });
       },
-      { threshold: 0.05, rootMargin: "0px 0px -60px 0px" }
+      { threshold: 0.05, rootMargin: "0px 0px -60px 0px" },
     );
 
     const targets = document.querySelectorAll(".reveal-on-scroll");
@@ -110,36 +126,42 @@ function Hero() {
     : "€ 38.2B";
 
   const tenderTitle = activeTender?.title || "Federal Highway · Phase II";
-  const tenderIdDisplay = activeTender?.id ? `GOV-${activeTender.id.slice(0, 8).toUpperCase()}` : "GOV-2026-ROAD-INFRA-014";
-  const bidsCount = proofData?.bids?.length ?? (activeTender?.bidCount ?? 14);
+  const tenderIdDisplay = activeTender?.id
+    ? `GOV-${activeTender.id.slice(0, 8).toUpperCase()}`
+    : "GOV-2026-ROAD-INFRA-014";
+  const bidsCount = proofData?.bids?.length ?? activeTender?.bidCount ?? 14;
 
-  const displayBids = (proofData?.bids && proofData.bids.length > 0)
-    ? proofData.bids.map((b: any, index: number) => ({
-        vendor: b.revealed?.plaintextBid?.vendor || `Vendor ${b.vendorHash.slice(2, 6).toUpperCase()}`,
-        ref: `BID-${activeTender?.id.slice(0, 3).toUpperCase()}-${index + 1}`,
-        hash: b.commitment.slice(0, 18),
-        amount: b.revealed?.plaintextBid?.amount ? `€ ${Number(b.revealed.plaintextBid.amount).toLocaleString()}` : "•••• •••",
-        verified: true,
-      }))
-    : heroBids.map((b) => ({ ...b, verified: false }));
+  const displayBids =
+    proofData?.bids && proofData.bids.length > 0
+      ? proofData.bids.map((b: any, index: number) => ({
+          vendor:
+            b.revealed?.plaintextBid?.vendor || `Vendor ${b.vendorHash.slice(2, 6).toUpperCase()}`,
+          ref: `BID-${activeTender?.id.slice(0, 3).toUpperCase()}-${index + 1}`,
+          hash: b.commitment.slice(0, 18),
+          amount: b.revealed?.plaintextBid?.amount
+            ? `€ ${Number(b.revealed.plaintextBid.amount).toLocaleString()}`
+            : "•••• •••",
+          verified: true,
+        }))
+      : heroBids.map((b) => ({ ...b, verified: false }));
 
   return (
-    <section 
+    <section
       onMouseMove={handleMouseMove}
       className="relative overflow-hidden border-b border-border"
     >
       <div className="absolute inset-0 bg-radial-ember opacity-90" />
       <div className="absolute inset-0 bg-grid opacity-[0.35]" />
       <div className="absolute inset-0 bg-noise opacity-40 mix-blend-overlay" />
-      
+
       {/* Global Mouse Background Glow */}
-      <div 
-        className="global-mouse-glow" 
-        style={{ 
-          left: mousePos.x, 
+      <div
+        className="global-mouse-glow"
+        style={{
+          left: mousePos.x,
           top: mousePos.y,
-          display: mousePos.x === -1000 ? "none" : "block"
-        }} 
+          display: mousePos.x === -1000 ? "none" : "block",
+        }}
       />
 
       {/* Decorative Orbs */}
@@ -162,15 +184,17 @@ function Hero() {
             sealed by math.
           </h1>
           <p className="mt-7 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
-            SealedBid is cryptographic infrastructure for high-stakes tendering. Vendor bids
-            are encrypted at submission, held in zero-trust custody, and unsealed in the
-            same atomic moment — with an immutable audit trail to prove it.
+            BidVault is cryptographic infrastructure for high-stakes tendering. Vendor bids are
+            encrypted at submission, held in zero-trust custody, and unsealed in the same atomic
+            moment — with an immutable audit trail to prove it.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <button 
-              onClick={() => toast.success("Enterprise Demo Requested", {
-                description: "Our procurement engineering team will contact you within 2 hours."
-              })}
+            <button
+              onClick={() =>
+                toast.success("Enterprise Demo Requested", {
+                  description: "Our procurement engineering team will contact you within 2 hours.",
+                })
+              }
               className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform cursor-pointer"
             >
               Book enterprise demo
@@ -200,8 +224,11 @@ function Hero() {
 
         {/* Right: Live tender card */}
         <div className="relative reveal-on-scroll delay-100">
-          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-primary/30 via-transparent to-amber-deep/20 blur-3xl opacity-80 animate-pulse" style={{ animationDuration: "8s" }} />
-          <div 
+          <div
+            className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-primary/30 via-transparent to-amber-deep/20 blur-3xl opacity-80 animate-pulse"
+            style={{ animationDuration: "8s" }}
+          />
+          <div
             onMouseMove={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
@@ -214,9 +241,7 @@ function Hero() {
                 <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                   Active tender
                 </div>
-                <div className="mt-1 font-display text-[18px] font-semibold">
-                  {tenderTitle}
-                </div>
+                <div className="mt-1 font-display text-[18px] font-semibold">{tenderTitle}</div>
                 <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                   {tenderIdDisplay} · {bidsCount} sealed bids
                 </div>
@@ -227,7 +252,10 @@ function Hero() {
               </div>
             </div>
             <div className="mt-6 flex items-center justify-center">
-              <CountdownRing targetDate={activeTender?.revealTime ? new Date(activeTender.revealTime) : target} size={240} />
+              <CountdownRing
+                targetDate={activeTender?.revealTime ? new Date(activeTender.revealTime) : target}
+                size={240}
+              />
             </div>
             <div className="mt-6 divide-y divide-border/70 rounded-lg border border-border/70 bg-surface/60">
               {displayBids.slice(0, 3).map((b: any) => (
@@ -271,7 +299,9 @@ function TrustStrip() {
       <div className="mx-auto grid max-w-[1400px] grid-cols-2 divide-x divide-border px-0 md:grid-cols-4">
         {items.map((it) => (
           <div key={it.k} className="px-6 py-7 hover:bg-card/30 transition-colors duration-300">
-            <div className="font-display text-base font-semibold text-gradient-ember inline-block">{it.k}</div>
+            <div className="font-display text-base font-semibold text-gradient-ember inline-block">
+              {it.k}
+            </div>
             <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               {it.v}
             </div>
@@ -314,7 +344,7 @@ function HowItWorks() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
       <div className="absolute inset-0 bg-grid-fine opacity-[0.4]" />
-      
+
       {/* Decorative Orbs */}
       <div className="glow-orb absolute top-1/2 left-1/3 h-[350px] w-[350px] bg-primary/10" />
 
@@ -357,7 +387,7 @@ function LiveReveal() {
     <section className="relative overflow-hidden border-b border-border bg-graphite text-ivory dark:bg-surface">
       <div className="absolute inset-0 bg-grid opacity-[0.15]" />
       <div className="absolute inset-x-0 top-0 h-px divider-x" />
-      
+
       {/* Decorative Orb */}
       <div className="glow-orb absolute bottom-0 right-10 h-[500px] w-[500px] bg-primary/10" />
 
@@ -371,9 +401,9 @@ function LiveReveal() {
               The deadline moment, choreographed.
             </h2>
             <p className="mt-4 max-w-2xl text-[15px] text-ivory/70">
-              Trigger the simulation below. Each cipher decrypts in the same atomic block;
-              hashes resolve, ranks settle, and a tamper-proof verification trail is written
-              to the ledger — all in under a second.
+              Trigger the simulation below. Each cipher decrypts in the same atomic block; hashes
+              resolve, ranks settle, and a tamper-proof verification trail is written to the ledger
+              — all in under a second.
             </p>
           </div>
           <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-ivory/50">
@@ -445,8 +475,18 @@ function Features() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                   Module {it.n}
                 </span>
-                <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary">
-                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  viewBox="0 0 16 16"
+                  className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary"
+                >
+                  <path
+                    d="M3 8h10M9 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
               <h3 className="mt-6 font-display text-[19px] font-semibold">{it.k}</h3>
@@ -464,7 +504,7 @@ function DashboardPreview() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-surface">
       <div className="absolute inset-0 bg-grid-fine opacity-[0.4]" />
-      
+
       {/* Decorative Orb */}
       <div className="glow-orb absolute bottom-0 left-10 h-[450px] w-[450px] bg-primary/10" />
 
@@ -494,23 +534,31 @@ function DashboardMockup() {
   return (
     <div className="grid grid-cols-[200px_1fr] divide-x divide-border">
       <div className="hidden flex-col gap-1 bg-sidebar p-3 md:flex">
-        {["Overview", "Active tenders", "Reveal queue", "Vendors", "Audit ledger", "Compliance", "Settings"].map(
-          (l, i) => (
-            <div
-              key={l}
-              className={`flex items-center justify-between rounded-md px-3 py-2 text-[13px] ${
-                i === 1
-                  ? "bg-sidebar-accent text-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/50"
-              }`}
-            >
-              <span>{l}</span>
-              {i === 2 && (
-                <span className="rounded-sm bg-primary/15 px-1.5 font-mono text-[10px] text-primary">3</span>
-              )}
-            </div>
-          ),
-        )}
+        {[
+          "Overview",
+          "Active tenders",
+          "Reveal queue",
+          "Vendors",
+          "Audit ledger",
+          "Compliance",
+          "Settings",
+        ].map((l, i) => (
+          <div
+            key={l}
+            className={`flex items-center justify-between rounded-md px-3 py-2 text-[13px] ${
+              i === 1
+                ? "bg-sidebar-accent text-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/50"
+            }`}
+          >
+            <span>{l}</span>
+            {i === 2 && (
+              <span className="rounded-sm bg-primary/15 px-1.5 font-mono text-[10px] text-primary">
+                3
+              </span>
+            )}
+          </div>
+        ))}
       </div>
       <div className="p-6">
         <div className="flex items-center justify-between">
@@ -551,7 +599,13 @@ function DashboardMockup() {
   );
 }
 
-function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "primary" }) {
+function Pill({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "primary";
+}) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] ${
@@ -560,7 +614,9 @@ function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?
           : "border border-border bg-surface text-muted-foreground"
       }`}
     >
-      {tone === "primary" && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-seal-pulse" />}
+      {tone === "primary" && (
+        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-seal-pulse" />
+      )}
       {children}
     </span>
   );
@@ -604,7 +660,9 @@ function BidTable() {
                   {r[3]}
                 </span>
               </td>
-              <td className="px-4 py-2.5 text-right font-mono text-[11px] text-muted-foreground">{r[4]}</td>
+              <td className="px-4 py-2.5 text-right font-mono text-[11px] text-muted-foreground">
+                {r[4]}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -631,7 +689,10 @@ function AuditPanel() {
       </div>
       <ol className="relative">
         {events.map((e, i) => (
-          <li key={i} className="relative flex gap-3 border-b border-border/60 px-4 py-3 last:border-0">
+          <li
+            key={i}
+            className="relative flex gap-3 border-b border-border/60 px-4 py-3 last:border-0"
+          >
             <div className="flex flex-col items-center">
               <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
               {i < events.length - 1 && <span className="mt-1 w-px flex-1 bg-border" />}
@@ -657,9 +718,12 @@ function SecuritySection() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
       <div className="absolute inset-0 bg-radial-ember opacity-50" />
-      
+
       {/* Decorative Orbs */}
-      <div className="glow-orb absolute top-20 right-10 h-[500px] w-[500px] bg-primary/10 animate-pulse" style={{ animationDuration: "12s" }} />
+      <div
+        className="glow-orb absolute top-20 right-10 h-[500px] w-[500px] bg-primary/10 animate-pulse"
+        style={{ animationDuration: "12s" }}
+      />
       <div className="glow-orb absolute bottom-10 left-10 h-[400px] w-[400px] bg-amber-deep/15" />
 
       <div className="relative mx-auto grid max-w-[1400px] gap-12 px-6 py-24 md:grid-cols-[1fr_1.1fr] md:items-center reveal-on-scroll">
@@ -671,9 +735,9 @@ function SecuritySection() {
             The platform doesn't ask you to trust the platform.
           </h2>
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-            Every bid is published as a commitment hash the moment it's submitted. After the
-            reveal, anyone — auditor, regulator, competing vendor — can independently verify
-            that the disclosed bid is byte-identical to what was sealed.
+            Every bid is published as a commitment hash the moment it's submitted. After the reveal,
+            anyone — auditor, regulator, competing vendor — can independently verify that the
+            disclosed bid is byte-identical to what was sealed.
           </p>
           <ul className="mt-7 space-y-3 text-[14px]">
             {[
@@ -717,7 +781,7 @@ function SecuritySection() {
             ))}
           </div>
           <div className="mt-5 rounded-md border border-success/30 bg-success/10 px-4 py-3 text-[12.5px] text-success">
-            ✓ Disclosed bid matches sealed commitment. Verified independently of SealedBid.
+            ✓ Disclosed bid matches sealed commitment. Verified independently of BidVault.
           </div>
         </div>
       </div>
@@ -731,7 +795,7 @@ function FinalCta() {
     <section className="relative overflow-hidden border-b border-border bg-graphite text-ivory">
       <div className="absolute inset-0 bg-grid opacity-[0.18]" />
       <div className="absolute inset-0 bg-radial-ember opacity-60" />
-      
+
       {/* Decorative Orbs */}
       <div className="glow-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] bg-primary/20 blur-[120px]" />
       <div className="glow-orb absolute bottom-0 right-10 h-[300px] w-[300px] bg-amber-deep/15" />
@@ -747,10 +811,12 @@ function FinalCta() {
           When fairness must be <span className="text-gradient-ember">proven</span>, not promised.
         </h2>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <button 
-            onClick={() => toast.success("Request Submitted Successfully", {
-              description: "A secure channel link has been generated and sent."
-            })}
+          <button
+            onClick={() =>
+              toast.success("Request Submitted Successfully", {
+                description: "A secure channel link has been generated and sent.",
+              })
+            }
             className="btn-ember inline-flex h-12 items-center rounded-md px-6 text-[14px] font-semibold hover:scale-[1.02] transition-transform cursor-pointer"
           >
             Talk to procurement engineering
@@ -760,7 +826,7 @@ function FinalCta() {
             onClick={(e) => {
               e.preventDefault();
               toast.info("Downloading Protocol Whitepaper v4.2", {
-                description: "The cryptographically verified PDF has been downloaded."
+                description: "The cryptographically verified PDF has been downloaded.",
               });
             }}
             className="inline-flex h-12 items-center rounded-md border border-ivory/20 bg-ivory/5 px-6 text-[14px] font-medium text-ivory backdrop-blur hover:bg-ivory/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -785,51 +851,139 @@ function LogoWall() {
     {
       name: "EuroGrid",
       svg: (
-        <svg className="h-5 w-auto" viewBox="0 0 100 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5"/>
-          <path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="1.5"/>
-          <text x="32" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>EUROGRID</text>
+        <svg
+          className="h-5 w-auto"
+          viewBox="0 0 100 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="1.5" />
+          <text
+            x="32"
+            y="16"
+            fill="currentColor"
+            className="font-sans text-[10px] font-bold tracking-[0.15em]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            EUROGRID
+          </text>
         </svg>
-      )
+      ),
     },
     {
       name: "Zurich Transit",
       svg: (
-        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="3" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-          <path d="M7 7l6 5-6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          <text x="30" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>ZURICH T.</text>
+        <svg
+          className="h-5 w-auto"
+          viewBox="0 0 120 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect x="3" y="3" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+          <path
+            d="M7 7l6 5-6 5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <text
+            x="30"
+            y="16"
+            fill="currentColor"
+            className="font-sans text-[10px] font-bold tracking-[0.15em]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            ZURICH T.
+          </text>
         </svg>
-      )
+      ),
     },
     {
       name: "BE Railways",
       svg: (
-        <svg className="h-5 w-auto" viewBox="0 0 110 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M11 4L5 15h12L11 4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-          <path d="M3 19h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          <text x="28" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>BE RAILWAY</text>
+        <svg
+          className="h-5 w-auto"
+          viewBox="0 0 110 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M11 4L5 15h12L11 4z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          <path d="M3 19h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <text
+            x="28"
+            y="16"
+            fill="currentColor"
+            className="font-sans text-[10px] font-bold tracking-[0.15em]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            BE RAILWAY
+          </text>
         </svg>
-      )
+      ),
     },
     {
       name: "Helvetic Gas",
       svg: (
-        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M11 4c3 3.5 6 6 6 8.5a6 6 0 1 1-12 0c0-2.5 3-5 6-8.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-          <text x="30" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>HELVETIC G.</text>
+        <svg
+          className="h-5 w-auto"
+          viewBox="0 0 120 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M11 4c3 3.5 6 6 6 8.5a6 6 0 1 1-12 0c0-2.5 3-5 6-8.5z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          <text
+            x="30"
+            y="16"
+            fill="currentColor"
+            className="font-sans text-[10px] font-bold tracking-[0.15em]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            HELVETIC G.
+          </text>
         </svg>
-      )
+      ),
     },
     {
       name: "Alpine Power",
       svg: (
-        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M5 13h6L8 19l8-9h-6l4-6L5 13z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-          <text x="28" y="16" fill="currentColor" className="font-sans text-[10px] font-bold tracking-[0.15em]" style={{ fontFamily: "var(--font-sans)" }}>ALPINE POWER</text>
+        <svg
+          className="h-5 w-auto"
+          viewBox="0 0 120 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 13h6L8 19l8-9h-6l4-6L5 13z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <text
+            x="28"
+            y="16"
+            fill="currentColor"
+            className="font-sans text-[10px] font-bold tracking-[0.15em]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            ALPINE POWER
+          </text>
         </svg>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -851,15 +1005,7 @@ function LogoWall() {
 }
 
 /* ---------- shared ---------- */
-function SectionHeader({
-  eyebrow,
-  title,
-  sub,
-}: {
-  eyebrow: string;
-  title: string;
-  sub?: string;
-}) {
+function SectionHeader({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
     <div className="flex items-end justify-between gap-8">
       <div className="max-w-3xl">
@@ -872,7 +1018,7 @@ function SectionHeader({
         {sub && <p className="mt-4 text-[15px] text-muted-foreground">{sub}</p>}
       </div>
       <div className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground md:block">
-        SealedBid / Protocol
+        BidVault / Protocol
       </div>
     </div>
   );

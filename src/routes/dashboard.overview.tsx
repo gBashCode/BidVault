@@ -12,8 +12,11 @@ dayjs.extend(utc);
 export const Route = createFileRoute("/dashboard/overview")({
   head: () => ({
     meta: [
-      { title: "Overview — SealedBid" },
-      { name: "description", content: "High-level summary of procurement activity, metrics and quick actions." },
+      { title: "Overview — BidVault" },
+      {
+        name: "description",
+        content: "High-level summary of procurement activity, metrics and quick actions.",
+      },
     ],
   }),
   component: DashboardOverview,
@@ -78,14 +81,25 @@ function DashboardOverview() {
   // Build dynamic metrics row:
   const activeCount = tenders.filter((t: any) => t.status === "OPEN").length;
   const sealedCount = tenders.filter((t: any) => t.status === "SEALED").length;
-  const revealedCount = tenders.filter((t: any) => t.status === "REVEALED" || t.status === "AWARDED").length;
-  
-  const oldestTenderDate = tenders.length > 0 
-    ? dayjs.utc(tenders[tenders.length - 1].createdAt).local().format("YYYY-MM-DD")
-    : "2026-01-01";
+  const revealedCount = tenders.filter(
+    (t: any) => t.status === "REVEALED" || t.status === "AWARDED",
+  ).length;
+
+  const oldestTenderDate =
+    tenders.length > 0
+      ? dayjs
+          .utc(tenders[tenders.length - 1].createdAt)
+          .local()
+          .format("YYYY-MM-DD")
+      : "2026-01-01";
 
   const metricsRowData = [
-    { k: "Total tenders", v: String(tenders.length), sub: `since ${oldestTenderDate}`, color: "text-foreground" },
+    {
+      k: "Total tenders",
+      v: String(tenders.length),
+      sub: `since ${oldestTenderDate}`,
+      color: "text-foreground",
+    },
     { k: "Active", v: String(activeCount), sub: "accepting bids", color: "text-primary" },
     { k: "Sealed", v: String(sealedCount), sub: "awaiting reveal", color: "text-success" },
     { k: "Revealed", v: String(revealedCount), sub: "evaluation phase", color: "text-foreground" },
@@ -104,14 +118,15 @@ function DashboardOverview() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
-                    Workspace · {user?.email ? `Operator: ${user.email}` : "Federal Procurement · BE"}
+                    Workspace ·{" "}
+                    {user?.email ? `Operator: ${user.email}` : "Federal Procurement · BE"}
                   </div>
                   <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">
                     Overview
                   </h1>
                   <p className="mt-2 max-w-2xl text-[14px] text-muted-foreground">
-                    High-level summary of tenders, bid activity, compliance posture
-                    and procurement throughput across the workspace.
+                    High-level summary of tenders, bid activity, compliance posture and procurement
+                    throughput across the workspace.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -166,7 +181,11 @@ function DashboardOverview() {
 
 /* ── sub-components ────────────────────────────────────────────── */
 
-function MetricRow({ items }: { items: Array<{ k: string; v: string; sub: string; color: string }> }) {
+function MetricRow({
+  items,
+}: {
+  items: Array<{ k: string; v: string; sub: string; color: string }>;
+}) {
   return (
     <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
       {items.map((x) => (
@@ -174,9 +193,7 @@ function MetricRow({ items }: { items: Array<{ k: string; v: string; sub: string
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {x.k}
           </div>
-          <div className={`tabular mt-1 font-display text-2xl font-semibold ${x.color}`}>
-            {x.v}
-          </div>
+          <div className={`tabular mt-1 font-display text-2xl font-semibold ${x.color}`}>{x.v}</div>
           <div className="font-mono text-[10.5px] text-muted-foreground">{x.sub}</div>
         </div>
       ))}
@@ -186,7 +203,7 @@ function MetricRow({ items }: { items: Array<{ k: string; v: string; sub: string
 
 function BarChart({ metricsData }: { metricsData: any }) {
   const volume = metricsData?.monthlyVolume || [];
-  
+
   const barData = volume.map((v: any) => {
     const monthLabel = dayjs(v.month, "YYYY-MM").format("MMM");
     return {
@@ -196,13 +213,16 @@ function BarChart({ metricsData }: { metricsData: any }) {
     };
   });
 
-  const displayData = barData.length > 0 ? barData : [
-    { month: "Jan", tenders: 2, bids: 9 },
-    { month: "Feb", tenders: 3, bids: 14 },
-    { month: "Mar", tenders: 5, bids: 26 },
-    { month: "Apr", tenders: 6, bids: 38 },
-    { month: "May", tenders: 8, bids: 44 },
-  ];
+  const displayData =
+    barData.length > 0
+      ? barData
+      : [
+          { month: "Jan", tenders: 2, bids: 9 },
+          { month: "Feb", tenders: 3, bids: 14 },
+          { month: "Mar", tenders: 5, bids: 26 },
+          { month: "Apr", tenders: 6, bids: 38 },
+          { month: "May", tenders: 8, bids: 44 },
+        ];
 
   const maxVal = Math.max(...displayData.map((d: any) => Math.max(d.bids, d.tenders)));
 
@@ -241,7 +261,9 @@ function BarChart({ metricsData }: { metricsData: any }) {
               </div>
             </div>
             <div className="font-mono text-[10px] text-muted-foreground">{d.month}</div>
-            <div className="tabular font-mono text-[11px] font-medium">{d.tenders} T / {d.bids} B</div>
+            <div className="tabular font-mono text-[11px] font-medium">
+              {d.tenders} T / {d.bids} B
+            </div>
           </div>
         ))}
       </div>
@@ -256,17 +278,16 @@ function TopTenders({ metricsData, tenders }: { metricsData: any; tenders: any[]
   const displayTenders = sorted.slice(0, 4).map((item: any) => {
     const tenderObj = tenders.find((t: any) => t.id === item.tenderId);
     const bidsCount = item.vendorCount;
-    const value = tenderObj?.status === "AWARDED" 
-      ? `€ ${(Math.random() * 50 + 5).toFixed(1)} M` 
-      : "Sealed";
+    const value =
+      tenderObj?.status === "AWARDED" ? `€ ${(Math.random() * 50 + 5).toFixed(1)} M` : "Sealed";
 
     return {
       id: item.tenderId,
       title: item.title,
       bids: bidsCount,
       value: value,
-      status: tenderObj?.status 
-        ? tenderObj.status.charAt(0) + tenderObj.status.slice(1).toLowerCase() 
+      status: tenderObj?.status
+        ? tenderObj.status.charAt(0) + tenderObj.status.slice(1).toLowerCase()
         : "Sealed",
     };
   });
@@ -391,4 +412,3 @@ function PlatformHealth() {
     </div>
   );
 }
-

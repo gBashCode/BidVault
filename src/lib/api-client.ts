@@ -16,9 +16,9 @@ apiClient.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // Unauthorized: Redirect to login page and clean up any local states
+      // Unauthorized: Redirect to auth page and clean up any local states
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        window.location.href = "/auth";
       }
     } else if (status === 423) {
       // Locked: The reveal time has not yet arrived
@@ -28,14 +28,16 @@ apiClient.interceptors.response.use(
     } else if (status === 403) {
       // Forbidden: Submission closed
       toast.error("Submission Closed", {
-        description: error.response?.data?.message || "The submission deadline for this tender has passed.",
+        description:
+          error.response?.data?.message || "The submission deadline for this tender has passed.",
       });
     } else if (status === 400) {
       // Bad Request: Commitment or validation mismatch
       const errMsg = error.response?.data?.message || "";
       if (errMsg.toLowerCase().includes("commitment") || errMsg.toLowerCase().includes("salt")) {
         toast.error("Commitment Mismatch", {
-          description: "The submitted cryptographic commitment and salt do not match the expected values.",
+          description:
+            "The submitted cryptographic commitment and salt do not match the expected values.",
         });
       } else {
         toast.error("Invalid Request", {
@@ -45,5 +47,5 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

@@ -1,8 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { CountdownRing } from "@/components/CountdownRing";
-import { ShieldCheck, Clock, AlertTriangle, FileText, CheckCircle2 } from "lucide-react";
+import {
+  ShieldCheck,
+  Clock,
+  AlertTriangle,
+  FileText,
+  CheckCircle2,
+  ChevronRight,
+} from "lucide-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { toast } from "sonner";
@@ -10,11 +17,19 @@ import { toast } from "sonner";
 dayjs.extend(utc);
 
 export const Route = createFileRoute("/vendor/")({
+  validateSearch: (search: Record<string, unknown>): { tenderId?: string } => {
+    return {
+      tenderId: search.tenderId as string | undefined,
+    };
+  },
   component: VendorOverview,
 });
 
 function VendorOverview() {
-  // 1. Fetch all tenders to find the active one
+  const { tenderId: searchTenderId } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.id });
+
+  // 1. Fetch all tenders
   const { data: tenders = [], isLoading: loadingTenders } = useQuery({
     queryKey: ["tenders"],
     queryFn: async () => {
@@ -23,12 +38,7 @@ function VendorOverview() {
     },
   });
 
-  // Find the first OPEN tender, or DRAFT, or fallback to the latest one
-  const activeTender =
-    tenders.find((t: any) => t.status === "OPEN") ||
-    tenders.find((t: any) => t.status === "DRAFT") ||
-    tenders[0];
-
+  const activeTender = searchTenderId ? tenders.find((t: any) => t.id === searchTenderId) : null;
   const tenderId = activeTender?.id;
 
   // 2. Fetch documents for this tender
@@ -53,7 +63,9 @@ function VendorOverview() {
     enabled: !!tenderId,
   });
 
-  if (loadingTenders || loadingBids || loadingDocs) {
+  const isLoading = loadingTenders || (!!tenderId && (loadingBids || loadingDocs));
+
+  if (isLoading) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -62,14 +74,60 @@ function VendorOverview() {
     );
   }
 
+  // If no specific tender is selected, show list
   if (!activeTender) {
+    if (tenders.length === 0) {
+      return (
+        <div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500" />
+          <h3 className="font-display text-xl font-semibold">No Active Tenders Found</h3>
+          <p className="text-sm text-muted-foreground max-w-md">
+            There are currently no active or published tenders in your organization database. Check
+            back later or contact your procurement administrator.
+          </p>
+        </div>
+      );
+    }
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
-        <AlertTriangle className="h-12 w-12 text-amber-500" />
-        <h3 className="font-display text-xl font-semibold">No Active Tenders Found</h3>
-        <p className="text-sm text-muted-foreground max-w-md">
-          There are currently no active or published tenders in your organization database. Check back later or contact your procurement administrator.
-        </p>
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Available Tenders</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Select an open tender to view documents and submit your encrypted bid.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {tenders.map((t: any) => (
+            <div
+              key={t.id}
+              className="glass-card rounded-xl p-5 hover:border-primary/50 transition-colors"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="font-semibold text-lg">{t.title}</h3>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-widest ${t.status === "OPEN" ? "bg-primary/20 text-primary border border-primary/50" : "bg-surface border border-border text-muted-foreground"}`}
+                >
+                  {t.status}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                {t.description || "No description provided."}
+              </p>
+              <div className="flex flex-col gap-2 font-mono text-[11px] text-muted-foreground mb-6">
+                <div>
+                  Deadline: {dayjs.utc(t.submissionDeadline).format("YYYY-MM-DD HH:mm")} UTC
+                </div>
+                <div>ID: {t.id}</div>
+              </div>
+              <button
+                onClick={() => navigate({ search: { tenderId: t.id } })}
+                className="w-full btn-ember h-9 rounded-md flex items-center justify-center gap-2 text-[12px] cursor-pointer"
+              >
+                View Tender <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -78,11 +136,17 @@ function VendorOverview() {
   const isSubmitted = !!bid;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+      <button
+        onClick={() => navigate({ search: { tenderId: undefined } })}
+        className="text-[11px] font-mono text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+      >
+        ← Back to all tenders
+      </button>
       <Breadcrumb tenderTitle={activeTender.title} />
       <Header activeTender={activeTender} isSubmitted={isSubmitted} />
       <MetricRow activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} />
-      
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <CountdownPanel activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} />
         <TenderDocuments documents={documents} />
@@ -107,20 +171,19 @@ function Header({ activeTender, isSubmitted }: { activeTender: any; isSubmitted:
   return (
     <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {activeTender.title}
-        </h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">{activeTender.title}</h1>
         <div className="mt-1 font-mono text-[11px] text-muted-foreground">
           {activeTender.id} · Published by Procurement Authority
         </div>
       </div>
       <div className="flex gap-2">
         {!isSubmitted ? (
-          <Link 
+          <Link
             to="/vendor/submit"
+            search={{ tenderId: activeTender.id }}
             className="btn-ember inline-flex h-10 items-center rounded-md px-6 text-[13px] font-semibold cursor-pointer shadow-[0_0_15px_rgba(255,107,0,0.3)] hover:shadow-[0_0_25px_rgba(255,107,0,0.5)] transition-shadow"
           >
-            Submit Sealed Bid
+            Submit BidVault
           </Link>
         ) : (
           <div className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 text-[13px] font-semibold text-emerald-500">
@@ -133,49 +196,62 @@ function Header({ activeTender, isSubmitted }: { activeTender: any; isSubmitted:
   );
 }
 
-function MetricRow({ activeTender, isSubmitted, bid }: { activeTender: any; isSubmitted: boolean; bid: any }) {
+function MetricRow({
+  activeTender,
+  isSubmitted,
+  bid,
+}: {
+  activeTender: any;
+  isSubmitted: boolean;
+  bid: any;
+}) {
   // Use UTC via dayjs for date formatting per constraint 5
   const deadlineUTC = dayjs.utc(activeTender.submissionDeadline);
   const userTZ = dayjs.tz ? dayjs.tz.guess() : "UTC";
   const deadlineLocal = deadlineUTC.local().format("YYYY-MM-DD HH:mm");
 
   const m = [
-    { 
-      k: "Your Status", 
-      v: isSubmitted ? "Submitted" : "Not Submitted", 
-      sub: isSubmitted ? "Cryptographically sealed" : "Action required" 
+    {
+      k: "Your Status",
+      v: isSubmitted ? "Submitted" : "Not Submitted",
+      sub: isSubmitted ? "Cryptographically sealed" : "Action required",
     },
-    { 
-      k: "Required format", 
-      v: "AES-256-GCM", 
-      sub: "Envelope encrypted" 
+    {
+      k: "Required format",
+      v: "AES-256-GCM",
+      sub: "Envelope encrypted",
     },
-    { 
-      k: "Submission Deadline", 
-      v: deadlineUTC.format("HH:mm") + " UTC", 
-      sub: `${deadlineLocal} (${userTZ})` 
+    {
+      k: "Submission Deadline",
+      v: deadlineUTC.format("HH:mm") + " UTC",
+      sub: `${deadlineLocal} (${userTZ})`,
     },
-    { 
-      k: "Tender Status", 
-      v: activeTender.status, 
-      sub: `Current lifecycle stage` 
+    {
+      k: "Tender Status",
+      v: activeTender.status,
+      sub: `Current lifecycle stage`,
     },
   ];
 
   return (
     <div className="mt-6 grid gap-4 md:grid-cols-4">
       {m.map((x, i) => (
-        <div key={x.k} className="glass-card rounded-xl px-5 py-4 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]">
+        <div
+          key={x.k}
+          className="glass-card rounded-xl px-5 py-4 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
+        >
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {x.k}
           </div>
-          <div className={`tabular mt-1 font-display text-2xl font-semibold inline-block ${
-            i === 0 
-              ? isSubmitted 
-                ? "text-emerald-400" 
-                : "text-primary animate-pulse" 
-              : "text-gradient-ember"
-          }`}>
+          <div
+            className={`tabular mt-1 font-display text-2xl font-semibold inline-block ${
+              i === 0
+                ? isSubmitted
+                  ? "text-emerald-400"
+                  : "text-primary animate-pulse"
+                : "text-gradient-ember"
+            }`}
+          >
             {x.v}
           </div>
           <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">{x.sub}</div>
@@ -185,7 +261,15 @@ function MetricRow({ activeTender, isSubmitted, bid }: { activeTender: any; isSu
   );
 }
 
-function CountdownPanel({ activeTender, isSubmitted, bid }: { activeTender: any; isSubmitted: boolean; bid: any }) {
+function CountdownPanel({
+  activeTender,
+  isSubmitted,
+  bid,
+}: {
+  activeTender: any;
+  isSubmitted: boolean;
+  bid: any;
+}) {
   const targetDate = new Date(activeTender.submissionDeadline);
   const isExpired = Date.now() > targetDate.getTime();
 
@@ -194,10 +278,10 @@ function CountdownPanel({ activeTender, isSubmitted, bid }: { activeTender: any;
       <div className="absolute inset-0 bg-radial-ember opacity-50" />
       <div className="glow-orb absolute -top-10 -right-10 h-[250px] w-[250px] bg-primary/10" />
       <div className="relative grid items-center gap-6 md:grid-cols-[auto_1fr]">
-        <CountdownRing 
-          targetDate={targetDate} 
-          size={200} 
-          title={isExpired ? "Status" : "Deadline"} 
+        <CountdownRing
+          targetDate={targetDate}
+          size={200}
+          title={isExpired ? "Status" : "Deadline"}
           subtitle={isSubmitted ? "Sealed receipt safe" : "Mathematically locked"}
         />
         <div>
@@ -205,11 +289,11 @@ function CountdownPanel({ activeTender, isSubmitted, bid }: { activeTender: any;
             {isExpired ? "Submission Window Closed" : "Submission Window Open"}
           </div>
           <h3 className="mt-2 font-display text-2xl font-semibold">
-            {isSubmitted 
+            {isSubmitted
               ? "Your bid is cryptographically sealed."
-              : isExpired 
-              ? "The submission window has closed."
-              : "Prepare your encrypted envelope."}
+              : isExpired
+                ? "The submission window has closed."
+                : "Prepare your encrypted envelope."}
           </h3>
           <p className="mt-3 text-[13.5px] text-muted-foreground">
             {isSubmitted
@@ -242,13 +326,14 @@ function TenderDocuments({ documents }: { documents: any[] }) {
     { filename: "Legal Terms & Conditions", fileSize: 890 * 1024, type: "PDF" },
   ];
 
-  const items = documents.length > 0 
-    ? documents.map(d => ({
-        filename: d.filename,
-        fileSize: d.fileSize,
-        type: d.filename.split(".").pop()?.toUpperCase() || "PDF"
-      }))
-    : defaultItems;
+  const items =
+    documents.length > 0
+      ? documents.map((d) => ({
+          filename: d.filename,
+          fileSize: d.fileSize,
+          type: d.filename.split(".").pop()?.toUpperCase() || "PDF",
+        }))
+      : defaultItems;
 
   const formatSize = (bytes: number) => {
     if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + " MB";
@@ -261,7 +346,7 @@ function TenderDocuments({ documents }: { documents: any[] }) {
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Tender Documents
         </div>
-        <button 
+        <button
           onClick={() => toast.success("Downloading all documents...")}
           className="font-mono text-[10px] text-primary hover:underline cursor-pointer"
         >
@@ -273,7 +358,9 @@ function TenderDocuments({ documents }: { documents: any[] }) {
           <li key={it.filename} className="flex items-center justify-between px-5 py-3">
             <div>
               <div className="text-[13px] font-medium text-foreground/90">{it.filename}</div>
-              <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">{formatSize(it.fileSize)}</div>
+              <div className="font-mono text-[10.5px] text-muted-foreground mt-0.5">
+                {formatSize(it.fileSize)}
+              </div>
             </div>
             <span className="rounded-sm bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] border border-border text-muted-foreground">
               {it.type}

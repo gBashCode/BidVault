@@ -101,6 +101,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.2.1
         version: 4.3.0(vite@7.3.3(@types/node@22.19.19)(jiti@1.21.7)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0))
+      '@tanstack/query-core':
+        specifier: ^5.100.11
+        version: 5.100.11
       '@tanstack/react-query':
         specifier: ^5.83.0
         version: 5.100.11(react@19.2.6)
@@ -246,6 +249,9 @@ importers:
       '@aws-sdk/s3-presigned-post':
         specifier: ^3.1051.0
         version: 3.1051.0
+      '@fastify/cookie':
+        specifier: ^9.3.1
+        version: 9.3.1
       '@fastify/jwt':
         specifier: ^8.0.0
         version: 8.0.1
@@ -1521,6 +1527,9 @@ packages:
 
   '@fastify/ajv-compiler@3.6.0':
     resolution: {integrity: sha512-LwdXQJjmMD+GwLOkP7TVC68qa+pSSogeWWmznRJ/coyTcfe9qA05AHFSe1eZFwK6q+xVRpChnvFUkf1iYaSZsQ==}
+
+  '@fastify/cookie@9.3.1':
+    resolution: {integrity: sha512-h1NAEhB266+ZbZ0e9qUE6NnNR07i7DnNXWG9VbbZ8uC6O/hxHpl+Zoe5sw1yfdZ2U6XhToUGDnzQtWJdCaPwfg==}
 
   '@fastify/error@3.4.1':
     resolution: {integrity: sha512-wWSvph+29GR783IhmvdwWnN4bUxTD01Vm5Xad4i7i1VuAOItLvbPAb69sb0IQ2N57yprvhNIwAP5B6xfKTmjmQ==}
@@ -6526,6 +6535,11 @@ snapshots:
       ajv: 8.20.0
       ajv-formats: 2.1.1(ajv@8.20.0)
       fast-uri: 2.4.0
+
+  '@fastify/cookie@9.3.1':
+    dependencies:
+      cookie-signature: 1.2.2
+      fastify-plugin: 4.5.1
 
   '@fastify/error@3.4.1': {}
 

@@ -101,8 +101,8 @@ export function CircularCountdown({
           Reveal in
         </div>
         <div className="tabular mt-1 font-display text-3xl font-semibold">
-          {String(d).padStart(2, "0")}:{String(h).padStart(2, "0")}:
-          {String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
+          {String(d).padStart(2, "0")}:{String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}:
+          {String(s).padStart(2, "0")}
         </div>
         <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-primary">
           <span className="h-1.5 w-1.5 animate-seal-pulse rounded-full bg-primary" />

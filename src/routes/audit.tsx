@@ -11,8 +11,11 @@ import { ShieldCheck, Download, AlertTriangle, CheckCircle, Database } from "luc
 export const Route = createFileRoute("/audit")({
   head: () => ({
     meta: [
-      { title: "Audit ledger — SealedBid" },
-      { name: "description", content: "Immutable, cryptographically verifiable audit trail across every tender event." },
+      { title: "Audit ledger — BidVault" },
+      {
+        name: "description",
+        content: "Immutable, cryptographically verifiable audit trail across every tender event.",
+      },
     ],
   }),
   component: AuditPage,
@@ -35,8 +38,9 @@ function AuditPage() {
   const activeTender = useMemo(() => {
     if (tenders.length === 0) return null;
     return (
-      tenders.find((t: any) => t.status === "OPEN" || t.status === "SEALED" || t.status === "REVEALED") ||
-      tenders[0]
+      tenders.find(
+        (t: any) => t.status === "OPEN" || t.status === "SEALED" || t.status === "REVEALED",
+      ) || tenders[0]
     );
   }, [tenders]);
 
@@ -82,7 +86,10 @@ function AuditPage() {
 
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((r: any) => r.map((cell: any) => `"${cell}"`).join(","))].join("\n");
+      [
+        headers.join(","),
+        ...rows.map((r: any) => r.map((cell: any) => `"${cell}"`).join(",")),
+      ].join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -135,7 +142,7 @@ function AuditPage() {
             eventType: l.eventType,
             payload: l.payload || {},
             eventHash: l.eventHash,
-          }))
+          })),
         );
 
         if (!ok) {
@@ -162,7 +169,9 @@ function AuditPage() {
     return (
       <div className="flex h-[80vh] flex-col items-center justify-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <span className="font-mono text-xs text-muted-foreground">Synchronizing blockchain ledger...</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          Synchronizing blockchain ledger...
+        </span>
       </div>
     );
   }
@@ -170,7 +179,10 @@ function AuditPage() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden text-foreground">
       {/* Decorative Orbs */}
-      <div className="glow-orb absolute top-10 right-20 h-[500px] w-[500px] bg-primary/10 animate-pulse" style={{ animationDuration: "14s" }} />
+      <div
+        className="glow-orb absolute top-10 right-20 h-[500px] w-[500px] bg-primary/10 animate-pulse"
+        style={{ animationDuration: "14s" }}
+      />
       <div className="glow-orb absolute bottom-20 left-10 h-[400px] w-[400px] bg-amber-deep/10" />
 
       <SiteHeader />
@@ -186,19 +198,34 @@ function AuditPage() {
                 Audit ledger
               </h1>
               <p className="mt-2 max-w-2xl text-[14px] text-muted-foreground leading-relaxed">
-                Every event on SealedBid is hashed, time-stamped and chained. Anchored hourly
-                to our distributed ledger and signed by our independent trustees.
+                Every event on BidVault is hashed, time-stamped and chained. Anchored hourly to our
+                distributed ledger and signed by our independent trustees.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3 font-mono text-[11px]">
               {[
-                ["Last anchor", logs.length > 0 ? dayjs(logs[logs.length - 1].createdAt).format("HH:mm:ss") + "Z" : "UTC"],
-                ["Height", logs.length > 0 ? logs[logs.length - 1].height.toLocaleString() : "Gen 0"],
+                [
+                  "Last anchor",
+                  logs.length > 0
+                    ? dayjs(logs[logs.length - 1].createdAt).format("HH:mm:ss") + "Z"
+                    : "UTC",
+                ],
+                [
+                  "Height",
+                  logs.length > 0 ? logs[logs.length - 1].height.toLocaleString() : "Gen 0",
+                ],
                 ["Integrity", logs.length > 0 ? "VERIFIED" : "SYNCING"],
               ].map(([k, v]) => (
-                <div key={k} className="glass-card rounded-md px-3 py-2 shadow-sm hover:translate-y-0">
+                <div
+                  key={k}
+                  className="glass-card rounded-md px-3 py-2 shadow-sm hover:translate-y-0"
+                >
                   <div className="text-muted-foreground">{k}</div>
-                  <div className={`mt-0.5 font-semibold ${k === "Integrity" ? "text-emerald-400" : "text-foreground"}`}>{v}</div>
+                  <div
+                    className={`mt-0.5 font-semibold ${k === "Integrity" ? "text-emerald-400" : "text-foreground"}`}
+                  >
+                    {v}
+                  </div>
                 </div>
               ))}
             </div>
@@ -262,13 +289,19 @@ function AuditPage() {
               <tbody className="divide-y divide-border/60">
                 {loadingLogs ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground font-mono text-xs">
+                    <td
+                      colSpan={5}
+                      className="px-5 py-8 text-center text-muted-foreground font-mono text-xs"
+                    >
                       Fetching ledger logs...
                     </td>
                   </tr>
                 ) : logs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground font-mono text-xs">
+                    <td
+                      colSpan={5}
+                      className="px-5 py-8 text-center text-muted-foreground font-mono text-xs"
+                    >
                       No events recorded on this tender chain yet.
                     </td>
                   </tr>
@@ -284,7 +317,10 @@ function AuditPage() {
                       <td className="px-5 py-3 font-mono text-[11px] text-foreground">
                         {e.actorId.substring(0, 12)}...
                       </td>
-                      <td className="px-5 py-3 font-mono text-[11px] text-muted-foreground select-all" title={e.eventHash}>
+                      <td
+                        className="px-5 py-3 font-mono text-[11px] text-muted-foreground select-all"
+                        title={e.eventHash}
+                      >
                         {e.eventHash.substring(0, 16)}...
                       </td>
                       <td className="px-5 py-3 text-right tabular font-mono text-[11px]">
@@ -308,7 +344,8 @@ function AuditPage() {
             </div>
             {currentTender?.merkleRoot && (
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-sm bg-success/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-success border border-success/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Anchored on-chain
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Anchored
+                on-chain
               </div>
             )}
           </div>

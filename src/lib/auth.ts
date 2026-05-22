@@ -19,46 +19,61 @@ const userPayloadSchema = z.object({
   email: z.string().optional(),
 });
 
-// Server Action: Login (signs JWT with standard secret, sets httpOnly cookie)
+// Server Action: Login (proxies to fastify backend)
 export const loginAction = createServerFn({ method: "POST" })
-  .inputValidator(userPayloadSchema)
+  .inputValidator(z.object({ email: z.string().email(), password: z.string() }))
   .handler(async ({ data }) => {
-    // Generate simple JWT matching standard header/payload signature using standard library
-    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-    const payload = Buffer.from(
-      JSON.stringify({
-        id: data.id,
-        orgId: data.orgId,
-        role: data.role,
-        email: data.email || `${data.id.slice(0, 5)}@sealedbid.com`,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiry
-      })
-    ).toString("base64url");
+    try {
+      const res = await axios.post("http://localhost:4000/v1/auth/login", data, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
 
-    // In local development, we sign using a simple HMAC-SHA256 representation matching fastify's secret
-    const crypto = await import("crypto");
-    const secret = process.env.JWT_SECRET || "sealedbid-dev-secret-change-in-production";
-    const signature = crypto
-      .createHmac("sha256", secret)
-      .update(`${header}.${payload}`)
-      .digest("base64url");
+      const cookies = res.headers["set-cookie"];
+      if (cookies && cookies.length > 0) {
+        const { setResponseHeader } = await import("@tanstack/react-start/server");
+        setResponseHeader("Set-Cookie", cookies[0]);
+      }
+      return { success: true, user: res.data };
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || "Login failed");
+    }
+  });
 
-    const token = `${header}.${payload}.${signature}`;
+export const signupAction = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    email: z.string().email(),
+    password: z.string(),
+    companyName: z.string(),
+    role: z.enum(["VENDOR", "PROCUREMENT_MANAGER"])
+  }))
+  .handler(async ({ data }) => {
+    try {
+      const res = await axios.post("http://localhost:4000/v1/auth/signup", data, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
 
-    // Set cookie on response headers using Set-Cookie
-    return {
-      headers: {
-        "Set-Cookie": `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=3600; SameSite=Lax`,
-      },
-      user: data,
-    };
+      const cookies = res.headers["set-cookie"];
+      if (cookies && cookies.length > 0) {
+        const { setResponseHeader } = await import("@tanstack/react-start/server");
+        setResponseHeader("Set-Cookie", cookies[0]);
+      }
+      return { success: true, user: res.data };
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || "Signup failed");
+    }
   });
 
 // Server Action: Logout (clears httpOnly cookie)
 export const logoutAction = createServerFn({ method: "POST" }).handler(async () => {
+  const cookieValue = "token=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0";
+  const { setResponseHeader } = await import("@tanstack/react-start/server");
+  setResponseHeader("Set-Cookie", cookieValue);
+
   return {
     headers: {
-      "Set-Cookie": "token=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0",
+      "Set-Cookie": cookieValue,
     },
     success: true,
   };

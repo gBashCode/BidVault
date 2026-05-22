@@ -1,24 +1,24 @@
-import fp from 'fastify-plugin';
-import fjwt from '@fastify/jwt';
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import fp from "fastify-plugin";
+import fjwt from "@fastify/jwt";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
-import { prisma } from '@sealedbid/db';
-import { AuditChain } from '@sealedbid/crypto';
+import { prisma } from "@sealedbid/db";
+import { AuditChain } from "@sealedbid/crypto";
 
 export interface UserPayload {
   id: string;
   orgId: string;
-  role: 'ORG_ADMIN' | 'PROCUREMENT_MANAGER' | 'AUDITOR' | 'VENDOR';
+  role: "ORG_ADMIN" | "PROCUREMENT_MANAGER" | "AUDITOR" | "VENDOR";
 }
 
-declare module 'fastify' {
+declare module "fastify" {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     authorize: (roles: string[]) => (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
-declare module '@fastify/jwt' {
+declare module "@fastify/jwt" {
   interface FastifyJWT {
     payload: UserPayload;
     user: UserPayload;
@@ -28,7 +28,7 @@ declare module '@fastify/jwt' {
 function triggerSentryAlert(message: string, context: Record<string, any>) {
   console.error(`🚨 [SENTRY ALERT] ${message}`, context);
   const Sentry = (globalThis as any).Sentry;
-  if (Sentry && typeof Sentry.captureMessage === 'function') {
+  if (Sentry && typeof Sentry.captureMessage === "function") {
     Sentry.captureMessage(message, { extra: context });
   }
 }
@@ -36,17 +36,34 @@ function triggerSentryAlert(message: string, context: Record<string, any>) {
 export default fp(
   async function authPlugin(fastify: FastifyInstance) {
     await fastify.register(fjwt, {
-      secret: process.env.JWT_SECRET || 'sealedbid-dev-secret-change-in-production',
-      sign: { expiresIn: '15m' },
+      secret: process.env.JWT_SECRET || "sealedbid-dev-secret-change-in-production",
+      sign: { expiresIn: "15m" },
+      verify: {
+        extractToken: (request: FastifyRequest) => {
+          // 1. Extract from standard Authorization header
+          const auth = request.headers.authorization;
+          if (auth && auth.startsWith("Bearer ")) {
+            return auth.substring(7);
+          }
+          // 2. Extract from Cookie header (for cookie-based credential sharing)
+          const cookieHeader = request.headers.cookie || "";
+          const tokenCookie = cookieHeader.split(";").find((c) => c.trim().startsWith("token="));
+          if (tokenCookie) {
+            const cleanCookie = tokenCookie.trim();
+            return cleanCookie.substring(cleanCookie.indexOf("=") + 1);
+          }
+          return null;
+        },
+      },
     });
 
     // Decorator: authenticate (verify JWT, attach user)
-    fastify.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
+    fastify.decorate("authenticate", async function (request: FastifyRequest, reply: FastifyReply) {
       try {
         await request.jwtVerify();
       } catch (err: any) {
         const payload = {
-          reason: err.message || 'Invalid or missing token',
+          reason: err.message || "Invalid or missing token",
           ip: request.ip,
           method: request.method,
           url: request.url,
@@ -54,32 +71,16 @@ export default fp(
         };
 
         // Trigger simulated Sentry alert
-        triggerSentryAlert('Unauthorized access attempt', payload);
+        triggerSentryAlert("Unauthorized access attempt", payload);
 
-        // Record to AuditLog asynchronously to prevent blocking response
-        prisma.auditLog.findFirst({
-          orderBy: { id: 'desc' },
-        }).then(async (lastAudit) => {
-          const chain = new AuditChain(lastAudit?.eventHash);
-          const { eventHash, prevHash } = chain.append('SECURITY_ALERT_UNAUTHORIZED', payload);
-          await prisma.auditLog.create({
-            data: {
-              prevHash,
-              eventType: 'SECURITY_ALERT_UNAUTHORIZED',
-              payload,
-              eventHash,
-            },
-          });
-        }).catch((dbErr) => {
-          console.error('Failed to write unauthorized audit log:', dbErr);
-        });
-
-        reply.code(401).send({ statusCode: 401, error: 'Unauthorized', message: 'Invalid or missing token' });
+        reply
+          .code(401)
+          .send({ statusCode: 401, error: "Unauthorized", message: "Invalid or missing token" });
       }
     });
 
     // Decorator: authorize (check role against allowed list)
-    fastify.decorate('authorize', function (roles: string[]) {
+    fastify.decorate("authorize", function (roles: string[]) {
       return async function (request: FastifyRequest, reply: FastifyReply) {
         await fastify.authenticate(request, reply);
         if (reply.sent) return;
@@ -96,31 +97,38 @@ export default fp(
           };
 
           // Trigger simulated Sentry alert
-          triggerSentryAlert('Forbidden access attempt', payload);
+          triggerSentryAlert("Forbidden access attempt", payload);
 
           // Record to AuditLog asynchronously
-          prisma.auditLog.findFirst({
-            orderBy: { id: 'desc' },
-          }).then(async (lastAudit) => {
-            const chain = new AuditChain(lastAudit?.eventHash);
-            const { eventHash, prevHash } = chain.append('SECURITY_ALERT_FORBIDDEN', payload);
-            await prisma.auditLog.create({
-              data: {
-                prevHash,
-                eventType: 'SECURITY_ALERT_FORBIDDEN',
-                actorId: user.id,
-                payload,
-                eventHash,
-              },
+          prisma.auditLog
+            .findFirst({
+              orderBy: { id: "desc" },
+            })
+            .then(async (lastAudit) => {
+              const chain = new AuditChain(lastAudit?.eventHash);
+              const { eventHash, prevHash } = chain.append("SECURITY_ALERT_FORBIDDEN", payload);
+              await prisma.auditLog.create({
+                data: {
+                  prevHash,
+                  eventType: "SECURITY_ALERT_FORBIDDEN",
+                  actorId: user.id,
+                  payload,
+                  eventHash,
+                },
+              });
+            })
+            .catch((dbErr) => {
+              console.error("Failed to write forbidden audit log:", dbErr);
             });
-          }).catch((dbErr) => {
-            console.error('Failed to write forbidden audit log:', dbErr);
-          });
 
-          reply.code(403).send({ statusCode: 403, error: 'Forbidden', message: `Role '${user.role}' not authorized` });
+          reply.code(403).send({
+            statusCode: 403,
+            error: "Forbidden",
+            message: `Role '${user.role}' not authorized`,
+          });
         }
       };
     });
   },
-  { name: 'auth-plugin' }
+  { name: "auth-plugin" },
 );

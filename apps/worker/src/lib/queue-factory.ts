@@ -1,13 +1,13 @@
-import { Queue as BullQueue, Worker as BullWorker, Processor } from 'bullmq';
-import Redis from 'ioredis';
+import { Queue as BullQueue, Worker as BullWorker, Processor } from "bullmq";
+import Redis from "ioredis";
 
 let isRedisOnline: boolean | null = null;
 let redisConnection: Redis | null = null;
 
 export async function checkRedisConnection(): Promise<boolean> {
   if (isRedisOnline !== null) return isRedisOnline;
-  
-  const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
+  const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
   const connection = new Redis(redisUrl, {
     maxRetriesPerRequest: null,
     connectTimeout: 1000,
@@ -17,7 +17,7 @@ export async function checkRedisConnection(): Promise<boolean> {
   try {
     await Promise.race([
       connection.connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1000)),
     ]);
     await connection.ping();
     isRedisOnline = true;
@@ -43,13 +43,13 @@ export class MockQueue {
   async add(jobName: string, data: any, opts?: any): Promise<any> {
     const worker = mockWorkers[this.name];
     if (!worker) {
-      return { id: 'mock-job-id' };
+      return { id: "mock-job-id" };
     }
 
     const job = {
       name: jobName,
       data,
-      id: 'mock-job-' + Math.random().toString(36).slice(2, 11),
+      id: "mock-job-" + Math.random().toString(36).slice(2, 11),
       attemptsMade: 0,
       log: (msg: string) => {},
     };
@@ -102,7 +102,7 @@ export class MockWorker {
   async close() {}
 
   on(event: string, handler: Function) {
-    if (event === 'failed') {
+    if (event === "failed") {
       this.errorHandlers.push(handler);
     }
     return this;
@@ -118,7 +118,7 @@ export class MockWorker {
 export async function createQueue(name: string): Promise<any> {
   const online = await checkRedisConnection();
   if (online) {
-    const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+    const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
     return new BullQueue(name, { connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
   } else {
     return new MockQueue(name);
@@ -128,8 +128,11 @@ export async function createQueue(name: string): Promise<any> {
 export async function createWorker(name: string, processor: Processor, opts?: any): Promise<any> {
   const online = await checkRedisConnection();
   if (online) {
-    const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-    return new BullWorker(name, processor, { ...opts, connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
+    const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+    return new BullWorker(name, processor, {
+      ...opts,
+      connection: new Redis(redisUrl, { maxRetriesPerRequest: null }),
+    });
   } else {
     return new MockWorker(name, processor, opts);
   }

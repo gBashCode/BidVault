@@ -7,9 +7,19 @@ ALTER TABLE "Bid" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_isolation ON "User" 
 USING ("orgId" = current_setting('app.current_org_id', true)::text);
 
--- Policy for Tender: only see tenders in the same organization
+-- Policy for Tender (Enterprise Read/Write): only see/edit tenders in the same organization
 CREATE POLICY tender_isolation ON "Tender"
-USING ("orgId" = current_setting('app.current_org_id', true)::text);
+USING (
+  "orgId" = current_setting('app.current_org_id', true)::text
+  OR (
+    status IN ('OPEN', 'SEALED', 'REVEALED', 'AWARDED')
+    AND EXISTS (
+      SELECT 1 FROM "User" 
+      WHERE id = current_setting('app.current_user_id', true)::text 
+      AND role = 'VENDOR'
+    )
+  )
+);
 
 -- Policy for Bid (Vendor Read): Vendor can only SELECT their own bids
 CREATE POLICY bid_vendor_read ON "Bid" FOR SELECT

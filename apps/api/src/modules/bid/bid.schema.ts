@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const SubmitBidBody = z.object({
   commitment: z.string().length(66),
@@ -34,4 +34,3 @@ export const ConfirmUploadBody = z.object({
 export const WithdrawBidBody = z.object({
   reason: z.string().max(500).optional(),
 });
-

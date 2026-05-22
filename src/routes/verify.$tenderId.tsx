@@ -2,7 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { VerificationBadge } from "@/components/VerificationBadge";
-import { ShieldCheck, CheckCircle2, FileText, ChevronRight, ArrowLeft, Terminal, Copy, Download } from "lucide-react";
+import {
+  ShieldCheck,
+  CheckCircle2,
+  FileText,
+  ChevronRight,
+  ArrowLeft,
+  Terminal,
+  Copy,
+  Download,
+} from "lucide-react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import { useState } from "react";
@@ -16,7 +25,11 @@ function VerifyTenderPage() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   // Fetch the public Merkle proofs for this tender
-  const { data: proofData, isLoading, error } = useQuery({
+  const {
+    data: proofData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["public-tender-proof", tenderId],
     queryFn: async () => {
       const res = await apiClient.get(`/v1/public/tenders/${tenderId}/proof`);
@@ -34,7 +47,7 @@ function VerifyTenderPage() {
   const handleDownloadProofJson = () => {
     if (!proofData) return;
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-      JSON.stringify(proofData, null, 2)
+      JSON.stringify(proofData, null, 2),
     )}`;
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", jsonString);
@@ -49,7 +62,9 @@ function VerifyTenderPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <span className="font-mono text-xs text-muted-foreground">Validating Merkle root witnesses...</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          Validating Merkle root witnesses...
+        </span>
       </div>
     );
   }
@@ -62,9 +77,13 @@ function VerifyTenderPage() {
         </div>
         <h3 className="font-display text-xl font-semibold">Tender Merkle Root Not Found</h3>
         <p className="text-sm text-muted-foreground max-w-sm">
-          This tender may not exist or its unsealing/reveal deadline has not yet expired. Merkle proofs are only published after the unsealing phase is fully completed.
+          This tender may not exist or its unsealing/reveal deadline has not yet expired. Merkle
+          proofs are only published after the unsealing phase is fully completed.
         </p>
-        <Link to="/" className="btn-ember inline-flex h-9 items-center rounded-md px-4 text-xs font-semibold mt-2">
+        <Link
+          to="/"
+          className="btn-ember inline-flex h-9 items-center rounded-md px-4 text-xs font-semibold mt-2"
+        >
           Back to Public Index
         </Link>
       </div>
@@ -83,7 +102,10 @@ function VerifyTenderPage() {
       <header className="border-b border-border bg-background/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="mx-auto max-w-[1280px] px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-[12px] font-mono transition-colors">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-[12px] font-mono transition-colors"
+            >
               <ArrowLeft className="h-4 w-4" />
               <span>Back</span>
             </Link>
@@ -115,11 +137,17 @@ function VerifyTenderPage() {
                 {proofData.title}
               </h1>
               <p className="mt-2 text-[13.5px] text-muted-foreground max-w-2xl">
-                Cryptographic verification details for all bids submitted to tender <code className="bg-surface border border-border px-1.5 py-0.5 rounded font-mono text-xs">{tenderId}</code>.
+                Cryptographic verification details for all bids submitted to tender{" "}
+                <code className="bg-surface border border-border px-1.5 py-0.5 rounded font-mono text-xs">
+                  {tenderId}
+                </code>
+                .
               </p>
             </div>
             <div className="font-mono text-[11px] space-y-1.5 min-w-[280px] bg-surface/50 border border-border p-4 rounded-xl">
-              <div className="text-muted-foreground uppercase text-[9px] tracking-wider">Tender Merkle Root</div>
+              <div className="text-muted-foreground uppercase text-[9px] tracking-wider">
+                Tender Merkle Root
+              </div>
               <div className="text-foreground font-semibold font-mono break-all text-[12px] text-primary select-all">
                 {proofData.merkleRoot}
               </div>
@@ -154,7 +182,10 @@ function VerifyTenderPage() {
               <tbody className="divide-y divide-border/60">
                 {proofData.bids?.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground font-mono text-xs">
+                    <td
+                      colSpan={5}
+                      className="px-5 py-8 text-center text-muted-foreground font-mono text-xs"
+                    >
                       No bid records found for this tender.
                     </td>
                   </tr>
@@ -173,9 +204,7 @@ function VerifyTenderPage() {
                         <td className="px-5 py-4 font-mono text-muted-foreground select-all">
                           {item.commitment.substring(0, 16)}...
                         </td>
-                        <td className="px-5 py-4 font-semibold text-gradient-ember">
-                          {valueStr}
-                        </td>
+                        <td className="px-5 py-4 font-semibold text-gradient-ember">{valueStr}</td>
                         <td className="px-5 py-4 font-mono text-muted-foreground">
                           {item.merkleProof?.length || 0} hashes
                         </td>
@@ -203,7 +232,8 @@ function VerifyTenderPage() {
               Verify Locally via CLI
             </div>
             <p className="text-[13px] text-muted-foreground">
-              Run this raw command on your local terminal to fetch and verify the cryptographic Merkle root of the tender from the open API.
+              Run this raw command on your local terminal to fetch and verify the cryptographic
+              Merkle root of the tender from the open API.
             </p>
             <div className="relative flex items-center bg-background border border-border rounded-lg p-3 font-mono text-[11px] text-foreground/90 overflow-hidden shadow-inner">
               <code className="break-all select-all pr-8">{cliSnippet}</code>
@@ -223,8 +253,10 @@ function VerifyTenderPage() {
               Open Audit Proof
             </h4>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
-              Every commitment displayed is cryptographically verified to have been submitted prior to the deadline, and hashed into a single Merkle Tree.
-              This system provides mathematical guarantee that no bid was modified, injected, or deleted after the bidding window closed.
+              Every commitment displayed is cryptographically verified to have been submitted prior
+              to the deadline, and hashed into a single Merkle Tree. This system provides
+              mathematical guarantee that no bid was modified, injected, or deleted after the
+              bidding window closed.
             </p>
           </div>
         </div>

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendorRouteImport } from './routes/vendor'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendorIndexRouteImport } from './routes/vendor.index'
@@ -37,6 +38,11 @@ import { Route as ApiAuthMeRouteImport } from './routes/api.auth.me'
 const VendorRoute = VendorRouteImport.update({
   id: '/vendor',
   path: '/vendor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuditRoute = AuditRouteImport.update({
@@ -158,6 +164,7 @@ const ApiAuthMeRoute = ApiAuthMeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/vendor': typeof VendorRouteWithChildren
   '/dashboard/compliance': typeof DashboardComplianceRoute
   '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/dashboard/compliance': typeof DashboardComplianceRoute
   '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
   '/dashboard/drafts': typeof DashboardDraftsRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/vendor': typeof VendorRouteWithChildren
   '/dashboard/compliance': typeof DashboardComplianceRoute
   '/dashboard/custody-status': typeof DashboardCustodyStatusRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/audit'
+    | '/auth'
     | '/vendor'
     | '/dashboard/compliance'
     | '/dashboard/custody-status'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/audit'
+    | '/auth'
     | '/dashboard/compliance'
     | '/dashboard/custody-status'
     | '/dashboard/drafts'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/audit'
+    | '/auth'
     | '/vendor'
     | '/dashboard/compliance'
     | '/dashboard/custody-status'
@@ -316,6 +328,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditRoute: typeof AuditRoute
+  AuthRoute: typeof AuthRoute
   VendorRoute: typeof VendorRouteWithChildren
   DashboardComplianceRoute: typeof DashboardComplianceRoute
   DashboardCustodyStatusRoute: typeof DashboardCustodyStatusRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/vendor'
       fullPath: '/vendor'
       preLoaderRoute: typeof VendorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/audit': {
@@ -533,6 +553,7 @@ const VendorRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditRoute: AuditRoute,
+  AuthRoute: AuthRoute,
   VendorRoute: VendorRouteWithChildren,
   DashboardComplianceRoute: DashboardComplianceRoute,
   DashboardCustodyStatusRoute: DashboardCustodyStatusRoute,

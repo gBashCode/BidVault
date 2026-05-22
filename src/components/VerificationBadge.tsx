@@ -11,7 +11,13 @@ interface VerificationBadgeProps {
   className?: string;
 }
 
-export function VerificationBadge({ root, merkleRoot, commitment, proof, className = "" }: VerificationBadgeProps) {
+export function VerificationBadge({
+  root,
+  merkleRoot,
+  commitment,
+  proof,
+  className = "",
+}: VerificationBadgeProps) {
   const [status, setStatus] = useState<"idle" | "verifying" | "verified" | "failed">("idle");
 
   const handleVerify = async () => {

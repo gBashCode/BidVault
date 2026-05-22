@@ -21,12 +21,10 @@ function VendorComplianceRoute() {
         <span>/</span>
         <span className="text-foreground">Compliance</span>
       </div>
-      
+
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Compliance & KYC
-          </h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Compliance & KYC</h1>
           <div className="mt-1 font-mono text-[11px] text-muted-foreground">
             Helios Civil Works AG · Status: Verified
           </div>

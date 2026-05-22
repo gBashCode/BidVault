@@ -1,20 +1,20 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import supertest from 'supertest';
-import { buildApp } from '../src/app.js';
-import { prisma, mockRlsContext } from '@sealedbid/db';
-import { createCommitment } from '@sealedbid/crypto';
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import supertest from "supertest";
+import { buildApp } from "../src/app.js";
+import { prisma, mockRlsContext } from "@sealedbid/db";
+import { createCommitment } from "@sealedbid/crypto";
 
-describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
+describe("SealedBid API - Enterprise Hardening & Security Isolation", () => {
   let app: any;
   let request: supertest.SuperTest<supertest.Test>;
 
-  const orgA = 'org_a_enterprise';
-  const orgB = 'org_b_enterprise';
+  const orgA = "org_a_enterprise";
+  const orgB = "org_b_enterprise";
 
-  const managerA = 'mgr_a_enterprise';
-  const managerB = 'mgr_b_enterprise';
-  const vendor1 = 'vnd_1_enterprise';
-  const vendor2 = 'vnd_2_enterprise';
+  const managerA = "mgr_a_enterprise";
+  const managerB = "mgr_b_enterprise";
+  const vendor1 = "vnd_1_enterprise";
+  const vendor2 = "vnd_2_enterprise";
 
   let managerAToken: string;
   let managerBToken: string;
@@ -27,10 +27,10 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
     request = supertest(app.server);
 
     // Sign jwt tokens
-    managerAToken = app.jwt.sign({ id: managerA, orgId: orgA, role: 'PROCUREMENT_MANAGER' });
-    managerBToken = app.jwt.sign({ id: managerB, orgId: orgB, role: 'PROCUREMENT_MANAGER' });
-    vendor1Token = app.jwt.sign({ id: vendor1, orgId: orgA, role: 'VENDOR' });
-    vendor2Token = app.jwt.sign({ id: vendor2, orgId: orgA, role: 'VENDOR' });
+    managerAToken = app.jwt.sign({ id: managerA, orgId: orgA, role: "PROCUREMENT_MANAGER" });
+    managerBToken = app.jwt.sign({ id: managerB, orgId: orgB, role: "PROCUREMENT_MANAGER" });
+    vendor1Token = app.jwt.sign({ id: vendor1, orgId: orgA, role: "VENDOR" });
+    vendor2Token = app.jwt.sign({ id: vendor2, orgId: orgA, role: "VENDOR" });
 
     // Seed mock DB context securely
     try {
@@ -40,16 +40,42 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
         mockRlsContext.currentOrgId = null;
       }
 
-      await prisma.org.create({ data: { id: orgA, name: 'Organization A', type: 'GOVERNMENT' } }).catch(() => {});
-      await prisma.org.create({ data: { id: orgB, name: 'Organization B', type: 'ENTERPRISE' } }).catch(() => {});
+      await prisma.org
+        .create({ data: { id: orgA, name: "Organization A", type: "GOVERNMENT" } })
+        .catch(() => {});
+      await prisma.org
+        .create({ data: { id: orgB, name: "Organization B", type: "ENTERPRISE" } })
+        .catch(() => {});
 
-      await prisma.user.create({ data: { id: managerA, orgId: orgA, email: 'mgr-a@org-a.com', role: 'PROCUREMENT_MANAGER' } }).catch(() => {});
-      await prisma.user.create({ data: { id: managerB, orgId: orgB, email: 'mgr-b@org-b.com', role: 'PROCUREMENT_MANAGER' } }).catch(() => {});
+      await prisma.user
+        .create({
+          data: {
+            id: managerA,
+            orgId: orgA,
+            email: "mgr-a@org-a.com",
+            role: "PROCUREMENT_MANAGER",
+          },
+        })
+        .catch(() => {});
+      await prisma.user
+        .create({
+          data: {
+            id: managerB,
+            orgId: orgB,
+            email: "mgr-b@org-b.com",
+            role: "PROCUREMENT_MANAGER",
+          },
+        })
+        .catch(() => {});
 
-      await prisma.user.create({ data: { id: vendor1, orgId: orgA, email: 'vnd-1@org-a.com', role: 'VENDOR' } }).catch(() => {});
-      await prisma.user.create({ data: { id: vendor2, orgId: orgA, email: 'vnd-2@org-a.com', role: 'VENDOR' } }).catch(() => {});
+      await prisma.user
+        .create({ data: { id: vendor1, orgId: orgA, email: "vnd-1@org-a.com", role: "VENDOR" } })
+        .catch(() => {});
+      await prisma.user
+        .create({ data: { id: vendor2, orgId: orgA, email: "vnd-2@org-a.com", role: "VENDOR" } })
+        .catch(() => {});
     } catch (e) {
-      console.log('Seeding skipped in test environment');
+      console.log("Seeding skipped in test environment");
     }
   });
 
@@ -57,18 +83,18 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
     await app.close();
   });
 
-  it('should isolate tenants using Postgres RLS and verify secure S3 presigned POST flows', async () => {
+  it("should isolate tenants using Postgres RLS and verify secure S3 presigned POST flows", async () => {
     // ─── Step 1: Manager A creates a Tender ───
     const now = Date.now();
     const submissionDeadline = new Date(now + 2000).toISOString();
     const revealTime = new Date(now + 4000).toISOString();
 
     const createRes = await request
-      .post('/v1/tenders')
-      .set('Authorization', `Bearer ${managerAToken}`)
+      .post("/v1/tenders")
+      .set("Authorization", `Bearer ${managerAToken}`)
       .send({
-        title: 'Fighter Jet Spare Parts',
-        description: 'Procurement of military aerospace hardware.',
+        title: "Fighter Jet Spare Parts",
+        description: "Procurement of military aerospace hardware.",
         submissionDeadline,
         revealTime,
       });
@@ -80,25 +106,25 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
     // Publish Tender
     const publishRes = await request
       .patch(`/v1/tenders/${tenderId}/publish`)
-      .set('Authorization', `Bearer ${managerAToken}`);
+      .set("Authorization", `Bearer ${managerAToken}`);
     expect(publishRes.status).toBe(200);
 
     // ─── Step 2: Manager B from Org B tries to access Org A\'s Tender (Tenant Isolation check) ───
     const getRes = await request
       .get(`/v1/tenders/${tenderId}`)
-      .set('Authorization', `Bearer ${managerBToken}`);
+      .set("Authorization", `Bearer ${managerBToken}`);
     // Since Manager B is isolated from Org A via RLS, they must not see it (it returns 404/not found or similar)
     expect(getRes.status).toBe(404);
 
     // ─── Step 3: Vendor 1 submits a bid without handling raw bytes (Zero API Bytes) ───
     const bidData = { unitPrice: 450000, qty: 5 };
-    const salt = 'salt_enterprise_hardening_32_chars';
+    const salt = "salt_enterprise_hardening_32_chars";
     const commitment = createCommitment(bidData, salt);
     const saltHash = createCommitment({ salt }, salt);
 
     const submitRes = await request
       .post(`/v1/tenders/${tenderId}/bids`)
-      .set('Authorization', `Bearer ${vendor1Token}`)
+      .set("Authorization", `Bearer ${vendor1Token}`)
       .send({
         commitment,
         saltHash,
@@ -116,7 +142,7 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
     // ─── Step 4: Early reveal attempt triggers alert and logs event ───
     const earlyRevealRes = await request
       .post(`/v1/bids/${bidId}/reveal`)
-      .set('Authorization', `Bearer ${vendor1Token}`)
+      .set("Authorization", `Bearer ${vendor1Token}`)
       .send({
         plaintextBid: bidData,
         salt,
@@ -130,7 +156,7 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
       mockRlsContext.currentOrgId = null;
     }
     const auditLogs = await prisma.auditLog.findMany({});
-    const earlyRevealLog = auditLogs.find((l) => l.eventType === 'SECURITY_ALERT_EARLY_REVEAL');
+    const earlyRevealLog = auditLogs.find((l) => l.eventType === "SECURITY_ALERT_EARLY_REVEAL");
     expect(earlyRevealLog).toBeDefined();
     expect(earlyRevealLog?.tenderId).toBe(tenderId);
     expect(earlyRevealLog?.actorId).toBe(vendor1);
@@ -145,7 +171,7 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
       // Transition to SEALED first to bypass open date modification restriction
       await prisma.tender.update({
         where: { id: tenderId },
-        data: { status: 'SEALED' },
+        data: { status: "SEALED" },
       });
       await prisma.tender.update({
         where: { id: tenderId },
@@ -155,22 +181,24 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
         },
       });
     } catch (e) {
-      console.error('Date update failed in test:', e);
+      console.error("Date update failed in test:", e);
     }
 
     // Reveal with incorrect plaintext/salt
     const badRevealRes = await request
       .post(`/v1/bids/${bidId}/reveal`)
-      .set('Authorization', `Bearer ${vendor1Token}`)
+      .set("Authorization", `Bearer ${vendor1Token}`)
       .send({
         plaintextBid: { unitPrice: 10 },
-        salt: 'wrong_salt_value_for_commitment_mismatch',
+        salt: "wrong_salt_value_for_commitment_mismatch",
       });
 
     expect(badRevealRes.status).toBe(400);
 
     const auditLogsAfterMismatch = await prisma.auditLog.findMany({});
-    const mismatchLog = auditLogsAfterMismatch.find((l) => l.eventType === 'SECURITY_ALERT_COMMITMENT_MISMATCH');
+    const mismatchLog = auditLogsAfterMismatch.find(
+      (l) => l.eventType === "SECURITY_ALERT_COMMITMENT_MISMATCH",
+    );
     expect(mismatchLog).toBeDefined();
     expect(mismatchLog?.tenderId).toBe(tenderId);
     expect(mismatchLog?.actorId).toBe(vendor1);
@@ -179,19 +207,21 @@ describe('SealedBid API - Enterprise Hardening & Security Isolation', () => {
     // 1. Authentication failure (Invalid JWT)
     const invalidAuthRes = await request
       .get(`/v1/tenders/${tenderId}/bids`)
-      .set('Authorization', 'Bearer invalid_token_bytes_here');
+      .set("Authorization", "Bearer invalid_token_bytes_here");
     expect(invalidAuthRes.status).toBe(401);
 
     // 2. Authorization failure (Forbidden - Vendor accessing Manager endpoint)
     const forbiddenAuthRes = await request
       .get(`/v1/tenders/${tenderId}/bids`)
-      .set('Authorization', `Bearer ${vendor1Token}`);
+      .set("Authorization", `Bearer ${vendor1Token}`);
     expect(forbiddenAuthRes.status).toBe(403);
 
     // Verify auth security logs
     const finalAuditLogs = await prisma.auditLog.findMany({});
-    const unauthorizedLog = finalAuditLogs.find((l) => l.eventType === 'SECURITY_ALERT_UNAUTHORIZED');
-    const forbiddenLog = finalAuditLogs.find((l) => l.eventType === 'SECURITY_ALERT_FORBIDDEN');
+    const unauthorizedLog = finalAuditLogs.find(
+      (l) => l.eventType === "SECURITY_ALERT_UNAUTHORIZED",
+    );
+    const forbiddenLog = finalAuditLogs.find((l) => l.eventType === "SECURITY_ALERT_FORBIDDEN");
 
     expect(unauthorizedLog).toBeDefined();
     expect(forbiddenLog).toBeDefined();

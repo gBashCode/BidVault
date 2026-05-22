@@ -10,7 +10,7 @@ async function deriveKey(saltAndTenderId: string, tenderId: string): Promise<Cry
     enc.encode(saltAndTenderId),
     "PBKDF2",
     false,
-    ["deriveBits", "deriveKey"]
+    ["deriveBits", "deriveKey"],
   );
 
   // Use the tenderId as the salt for PBKDF2 derivation
@@ -20,7 +20,7 @@ async function deriveKey(saltAndTenderId: string, tenderId: string): Promise<Cry
     {
       name: "PBKDF2",
       salt: pbkdf2Salt,
-      iterations: 100000,
+      iterations: 600000,
       hash: "SHA-256",
     },
     baseKey,
@@ -29,7 +29,7 @@ async function deriveKey(saltAndTenderId: string, tenderId: string): Promise<Cry
       length: 256,
     },
     false, // extractable
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 }
 
@@ -39,7 +39,7 @@ async function deriveKey(saltAndTenderId: string, tenderId: string): Promise<Cry
  */
 export async function encryptBid(
   plaintextBid: object,
-  tenderId: string
+  tenderId: string,
 ): Promise<{
   commitment: string;
   saltHash: string;
@@ -72,7 +72,7 @@ export async function encryptBid(
       iv,
     },
     key,
-    enc.encode(JSON.stringify(plaintextBid))
+    enc.encode(JSON.stringify(plaintextBid)),
   );
 
   // 6. Pack IV (12 bytes) and ciphertext together in a single buffer
@@ -99,12 +99,10 @@ export async function encryptBid(
 export async function decryptBid(
   encryptedBlob: ArrayBuffer | Uint8Array,
   salt: string,
-  tenderId: string
+  tenderId: string,
 ): Promise<object> {
   const blobBytes =
-    encryptedBlob instanceof Uint8Array
-      ? encryptedBlob
-      : new Uint8Array(encryptedBlob);
+    encryptedBlob instanceof Uint8Array ? encryptedBlob : new Uint8Array(encryptedBlob);
 
   if (blobBytes.length < 12) {
     throw new Error("Invalid encrypted blob length");
@@ -124,7 +122,7 @@ export async function decryptBid(
       iv,
     },
     key,
-    ciphertext
+    ciphertext,
   );
 
   const dec = new TextDecoder();

@@ -1,4 +1,4 @@
-import ntpClient from 'ntp-client';
+import ntpClient from "ntp-client";
 
 let mockNtpOffsetMs: number | null = null;
 let bypassNtpSync = false;
@@ -16,12 +16,12 @@ export async function fetchNtpTime(): Promise<Date> {
     return new Date(Date.now() + mockNtpOffsetMs);
   }
 
-  const servers = ['time.google.com', 'pool.ntp.org'];
+  const servers = ["time.google.com", "pool.ntp.org"];
   for (const server of servers) {
     try {
       return await new Promise<Date>((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('NTP query timeout'));
+          reject(new Error("NTP query timeout"));
         }, 2000);
 
         ntpClient.getNetworkTime(server, 123, (err, date) => {
@@ -39,11 +39,11 @@ export async function fetchNtpTime(): Promise<Date> {
   }
 
   // If offline/sandbox testing and NTP is unreachable, fallback to system clock
-  if (bypassNtpSync || process.env.BYPASS_NTP_SYNC === 'true' || process.env.NODE_ENV === 'test') {
+  if (bypassNtpSync || process.env.BYPASS_NTP_SYNC === "true" || process.env.NODE_ENV === "test") {
     return new Date();
   }
 
-  throw new Error('NTP_SERVERS_UNREACHABLE');
+  throw new Error("NTP_SERVERS_UNREACHABLE");
 }
 
 let lastDriftMs = 0;
@@ -60,6 +60,6 @@ export async function assertTimeSync(): Promise<void> {
   lastDriftMs = drift;
 
   if (drift > 5000) {
-    throw new Error('CLOCK_DRIFT_DETECTED');
+    throw new Error("CLOCK_DRIFT_DETECTED");
   }
 }

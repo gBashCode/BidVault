@@ -5,8 +5,11 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar";
 export const Route = createFileRoute("/dashboard/members")({
   head: () => ({
     meta: [
-      { title: "Members — SealedBid" },
-      { name: "description", content: "Manage workspace team members, roles, and access controls." },
+      { title: "Members — BidVault" },
+      {
+        name: "description",
+        content: "Manage workspace team members, roles, and access controls.",
+      },
     ],
   }),
   component: MembersPage,
@@ -87,8 +90,6 @@ function MembersPage() {
   );
 }
 
-
-
 /* ── Breadcrumb ──────────────────────────────────────── */
 function Breadcrumb() {
   return (
@@ -105,9 +106,7 @@ function Header() {
   return (
     <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          Workspace members
-        </h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Workspace members</h1>
         <div className="mt-1 font-mono text-[11px] text-muted-foreground">
           Manage who can access this workspace and their permission levels.
         </div>
@@ -117,7 +116,16 @@ function Header() {
           Export list
         </button>
         <button className="btn-ember inline-flex h-10 items-center gap-2 rounded-md px-4 text-[13px] font-semibold">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
             <line x1="19" y1="8" x2="19" y2="14" />

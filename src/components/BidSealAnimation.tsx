@@ -42,16 +42,16 @@ export function BidSealAnimation({ commitment, isSealing, isComplete }: BidSealA
             isComplete
               ? "border-emerald-500 text-emerald-500 shadow-emerald-500/10"
               : isSealing
-              ? "border-primary text-primary shadow-primary/10"
-              : "border-muted text-muted-foreground"
+                ? "border-primary text-primary shadow-primary/10"
+                : "border-muted text-muted-foreground"
           }`}
           initial={{ scale: 0.8, rotate: -10 }}
           animate={
             isComplete
               ? { scale: [1, 1.15, 1], rotate: 0 }
               : isSealing
-              ? { scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }
-              : { scale: 1, rotate: 0 }
+                ? { scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }
+                : { scale: 1, rotate: 0 }
           }
           transition={{
             type: "spring",
@@ -73,14 +73,18 @@ export function BidSealAnimation({ commitment, isSealing, isComplete }: BidSealA
 
       <div className="text-center w-full">
         <h3 className="font-display font-medium text-lg text-foreground">
-          {isComplete ? "Bid Mathematically Sealed" : isSealing ? "Applying Client-Side Cryptography" : "Ready to Seal Bid"}
+          {isComplete
+            ? "Bid Mathematically Sealed"
+            : isSealing
+              ? "Applying Client-Side Cryptography"
+              : "Ready to Seal Bid"}
         </h3>
         <p className="mt-1.5 text-xs text-muted-foreground max-w-xs mx-auto">
           {isComplete
             ? "Your bid is encrypted and the commitment is saved on-chain. Plaintext bid has been purged."
             : isSealing
-            ? "Deriving AES-GCM-256 key from salt using PBKDF2 with 100,000 iterations..."
-            : "Click 'Seal and Submit' to locally encrypt your bid."}
+              ? "Deriving AES-GCM-256 key from salt using PBKDF2 with 100,000 iterations..."
+              : "Click 'Seal and Submit' to locally encrypt your bid."}
         </p>
 
         {/* Commitment Hash Reveal */}
@@ -97,7 +101,10 @@ export function BidSealAnimation({ commitment, isSealing, isComplete }: BidSealA
             <div className="font-mono text-[10px] break-all p-3 rounded-lg bg-black/40 border border-border/30 text-emerald-400 select-all shadow-inner relative overflow-hidden">
               <span className="relative z-10">{commitment}</span>
               {/* Scanline overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent pointer-events-none animate-scanline" style={{ height: "200%" }} />
+              <div
+                className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent pointer-events-none animate-scanline"
+                style={{ height: "200%" }}
+              />
             </div>
           </motion.div>
         )}

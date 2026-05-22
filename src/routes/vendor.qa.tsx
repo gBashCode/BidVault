@@ -11,7 +11,8 @@ function VendorQARoute() {
       author: "Helios Civil Works AG",
       status: "Answered",
       question: "Are there any specific requirements for the asphalt mix on section B4?",
-      answer: "Yes, please refer to Technical Annex A.3 regarding the modified polymer mix required for heavy traffic zones.",
+      answer:
+        "Yes, please refer to Technical Annex A.3 regarding the modified polymer mix required for heavy traffic zones.",
       date: "2026-04-20 10:45 UTC",
     },
     {
@@ -19,7 +20,8 @@ function VendorQARoute() {
       author: "Stratum Infrastructure",
       status: "Answered",
       question: "Will night-time construction be permitted to accelerate the timeline?",
-      answer: "Night-time construction is permitted between 22:00 and 05:00, subject to local noise ordinance compliance.",
+      answer:
+        "Night-time construction is permitted between 22:00 and 05:00, subject to local noise ordinance compliance.",
       date: "2026-04-21 14:12 UTC",
     },
     {
@@ -41,7 +43,7 @@ function VendorQARoute() {
         <span>/</span>
         <span className="text-foreground">Q&A Forum</span>
       </div>
-      
+
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">
@@ -58,7 +60,10 @@ function VendorQARoute() {
 
       <div className="mt-8 space-y-4">
         {questions.map((q) => (
-          <div key={q.id} className="glass-card relative rounded-xl p-5 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]">
+          <div
+            key={q.id}
+            className="glass-card relative rounded-xl p-5 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
+          >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-sm">
@@ -67,29 +72,31 @@ function VendorQARoute() {
                 <span className="text-[12px] font-medium text-foreground/80">{q.author}</span>
                 <span className="font-mono text-[10px] text-muted-foreground">{q.date}</span>
               </div>
-              <span className={`font-mono text-[10px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm ${
-                q.status === 'Answered' ? 'bg-success/15 text-success' : 'bg-amber-deep/20 text-amber-deep'
-              }`}>
+              <span
+                className={`font-mono text-[10px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm ${
+                  q.status === "Answered"
+                    ? "bg-success/15 text-success"
+                    : "bg-amber-deep/20 text-amber-deep"
+                }`}
+              >
                 {q.status}
               </span>
             </div>
-            
-            <div className="text-[14px] text-foreground font-medium mb-3">
-              {q.question}
-            </div>
-            
+
+            <div className="text-[14px] text-foreground font-medium mb-3">{q.question}</div>
+
             {q.answer ? (
               <div className="mt-3 bg-surface/50 rounded-lg p-4 border-l-2 border-primary">
                 <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1.5">
                   Procurement Authority Response
                 </div>
-                <div className="text-[13px] text-foreground/90">
-                  {q.answer}
-                </div>
+                <div className="text-[13px] text-foreground/90">{q.answer}</div>
               </div>
             ) : (
               <div className="mt-3 bg-surface/30 rounded-lg p-3 border border-dashed border-border text-center">
-                 <span className="font-mono text-[11px] text-muted-foreground">Response pending review by technical committee.</span>
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  Response pending review by technical committee.
+                </span>
               </div>
             )}
           </div>

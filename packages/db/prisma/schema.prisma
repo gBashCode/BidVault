@@ -36,9 +36,9 @@ enum UserRole {
 // ─── Models ──────────────────────────────────────────────────
 
 model Org {
-  id        String    @id @default(cuid())
-  name      String
-  type      OrgType
+  id            String    @id @default(cuid())
+  encryptedName String    // AES-256-GCM encrypted
+  type          OrgType
   createdAt DateTime  @default(now())
   tenders   Tender[]
   users     User[]
@@ -48,10 +48,12 @@ model Org {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  orgId     String
-  email     String   @unique
-  role      UserRole
+  id             String   @id @default(cuid())
+  orgId          String
+  emailHash      String   @unique // SHA-256 for deterministic lookups
+  encryptedEmail String   // AES-256-GCM encrypted
+  passwordHash   String
+  role           UserRole
   org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   bids      Bid[]
   tenders   Tender[] @relation("TenderCreatedBy")

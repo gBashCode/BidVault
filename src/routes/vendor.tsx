@@ -6,8 +6,11 @@ import axios from "axios";
 export const Route = createFileRoute("/vendor")({
   head: () => ({
     meta: [
-      { title: "Vendor portal — SealedBid" },
-      { name: "description", content: "Submit a cryptographically sealed bid with verifiable hashing and HSM custody." },
+      { title: "Vendor portal — BidVault" },
+      {
+        name: "description",
+        content: "Submit a cryptographically sealed bid with verifiable hashing and HSM custody.",
+      },
     ],
   }),
   beforeLoad: async ({ location }) => {
@@ -16,7 +19,7 @@ export const Route = createFileRoute("/vendor")({
         const res = await axios.get("/api/auth/me");
         if (!res.data || res.data.role !== "VENDOR") {
           throw redirect({
-            to: "/login" as any,
+            to: "/auth" as any,
             search: {
               redirect: location.href,
             } as any,
@@ -24,7 +27,7 @@ export const Route = createFileRoute("/vendor")({
         }
       } catch {
         throw redirect({
-          to: "/login" as any,
+          to: "/auth" as any,
           search: {
             redirect: location.href,
           } as any,
@@ -39,7 +42,10 @@ function VendorLayout() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Decorative Orbs */}
-      <div className="glow-orb absolute top-20 right-10 h-[600px] w-[600px] bg-primary/10 animate-pulse" style={{ animationDuration: "15s" }} />
+      <div
+        className="glow-orb absolute top-20 right-10 h-[600px] w-[600px] bg-primary/10 animate-pulse"
+        style={{ animationDuration: "15s" }}
+      />
       <div className="glow-orb absolute bottom-20 left-1/3 h-[500px] w-[500px] bg-amber-deep/10" />
 
       <SiteHeader />

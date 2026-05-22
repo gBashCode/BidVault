@@ -1,12 +1,12 @@
-import { assertTimeSync } from '../lib/time-guard.js';
-import { prisma } from '@sealedbid/db';
-import { AuditChain, buildTenderMerkleTree } from '@sealedbid/crypto';
-import { keccak_256 } from '@noble/hashes/sha3';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
-import { createQueue } from '../lib/queue-factory.js';
-import { getWebhookQueue } from './webhook.queue.js';
+import { assertTimeSync } from "../lib/time-guard.js";
+import { prisma } from "@sealedbid/db";
+import { AuditChain, buildTenderMerkleTree } from "@sealedbid/crypto";
+import { keccak_256 } from "@noble/hashes/sha3";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
+import { createQueue } from "../lib/queue-factory.js";
+import { getWebhookQueue } from "./webhook.queue.js";
 
-export const queueName = 'tender-lifecycle';
+export const queueName = "tender-lifecycle";
 
 let lifecycleQueue: any = null;
 
@@ -32,13 +32,13 @@ export function computeMerkleRoot(commitments: string[]): string {
  */
 export async function handleCheckReveals(): Promise<void> {
   await assertTimeSync();
-  
+
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
   const openTenders = await prisma.tender.findMany({
     where: {
-      status: 'OPEN',
+      status: "OPEN",
       revealTime: {
         lte: now,
         gt: oneHourAgo,
@@ -49,13 +49,17 @@ export async function handleCheckReveals(): Promise<void> {
 
   const q = await getQueue();
   for (const tender of openTenders) {
-    await q.add('seal-tender', { tenderId: tender.id }, {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 1000,
+    await q.add(
+      "seal-tender",
+      { tenderId: tender.id },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 1000,
+        },
       },
-    });
+    );
   }
 }
 
@@ -71,10 +75,10 @@ export async function handleSealTender(tenderId: string): Promise<void> {
   const updateResult = await prisma.tender.updateMany({
     where: {
       id: tenderId,
-      status: 'OPEN',
+      status: "OPEN",
     },
     data: {
-      status: 'SEALED',
+      status: "SEALED",
     },
   });
 
@@ -84,7 +88,7 @@ export async function handleSealTender(tenderId: string): Promise<void> {
 
   const lastAudit = await prisma.auditLog.findFirst({
     where: { tenderId },
-    orderBy: { id: 'desc' },
+    orderBy: { id: "desc" },
   });
 
   const lastHash = lastAudit?.eventHash;
@@ -92,17 +96,17 @@ export async function handleSealTender(tenderId: string): Promise<void> {
 
   const payload = {
     tenderId,
-    status: 'SEALED',
+    status: "SEALED",
     timestamp: new Date().toISOString(),
   };
 
-  const { eventHash, prevHash } = chain.append('TENDER_SEALED', payload);
+  const { eventHash, prevHash } = chain.append("TENDER_SEALED", payload);
 
   await prisma.auditLog.create({
     data: {
       tenderId,
       prevHash,
-      eventType: 'TENDER_SEALED',
+      eventType: "TENDER_SEALED",
       payload,
       eventHash,
     },
@@ -111,21 +115,25 @@ export async function handleSealTender(tenderId: string): Promise<void> {
   // Trigger webhook
   try {
     const wq = await getWebhookQueue();
-    await wq.add('deliver', { eventType: 'tender.sealed', tenderId });
+    await wq.add("deliver", { eventType: "tender.sealed", tenderId });
   } catch (err) {
-    console.error('Failed to queue tender.sealed webhook:', err);
+    console.error("Failed to queue tender.sealed webhook:", err);
   }
 
   const q = await getQueue();
-  const delay = process.env.NODE_ENV === 'test' ? 50 : 60000;
-  await q.add('reveal-tender', { tenderId }, {
-    delay,
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 1000,
+  const delay = process.env.NODE_ENV === "test" ? 50 : 60000;
+  await q.add(
+    "reveal-tender",
+    { tenderId },
+    {
+      delay,
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 1000,
+      },
     },
-  });
+  );
 }
 
 /**
@@ -139,10 +147,10 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
   const updateResult = await prisma.tender.updateMany({
     where: {
       id: tenderId,
-      status: 'SEALED',
+      status: "SEALED",
     },
     data: {
-      status: 'REVEALED',
+      status: "REVEALED",
     },
   });
 
@@ -165,7 +173,7 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
 
   const lastAudit = await prisma.auditLog.findFirst({
     where: { tenderId },
-    orderBy: { id: 'desc' },
+    orderBy: { id: "desc" },
   });
 
   const lastHash = lastAudit?.eventHash;
@@ -178,13 +186,13 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
     timestamp: new Date().toISOString(),
   };
 
-  const { eventHash, prevHash } = chain.append('TENDER_REVEALED', payload);
+  const { eventHash, prevHash } = chain.append("TENDER_REVEALED", payload);
 
   await prisma.auditLog.create({
     data: {
       tenderId,
       prevHash,
-      eventType: 'TENDER_REVEALED',
+      eventType: "TENDER_REVEALED",
       payload,
       eventHash,
     },
@@ -193,9 +201,8 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
   // Trigger webhook
   try {
     const wq = await getWebhookQueue();
-    await wq.add('deliver', { eventType: 'tender.revealed', tenderId });
+    await wq.add("deliver", { eventType: "tender.revealed", tenderId });
   } catch (err) {
-    console.error('Failed to queue tender.revealed webhook:', err);
+    console.error("Failed to queue tender.revealed webhook:", err);
   }
 }
-

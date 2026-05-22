@@ -81,26 +81,26 @@
   --radius: 0.5rem;
   /* Premium Dark Luxury Theme - Orange glow fintech style */
   --background: oklch(0.05 0.005 240);
-  --foreground: oklch(1.00 0 0);
+  --foreground: oklch(1 0 0);
   --ivory: oklch(0.98 0.001 240);
   --graphite: oklch(0.05 0.005 240);
   --surface: oklch(0.09 0.005 240);
   --surface-2: oklch(0.12 0.006 240);
   --line: oklch(0.24 0.015 48 / 25%);
   --card: oklch(0.09 0.005 240);
-  --card-foreground: oklch(1.00 0 0);
+  --card-foreground: oklch(1 0 0);
   --popover: oklch(0.09 0.005 240);
-  --popover-foreground: oklch(1.00 0 0);
+  --popover-foreground: oklch(1 0 0);
   --primary: oklch(0.68 0.21 48);
   --primary-foreground: oklch(0.05 0.005 240);
   --seal: oklch(0.68 0.21 48);
   --seal-foreground: oklch(0.05 0.005 240);
   --amber-deep: oklch(0.55 0.22 42);
-  --ember: oklch(0.72 0.20 54);
+  --ember: oklch(0.72 0.2 54);
   --secondary: oklch(0.14 0.005 240);
   --secondary-foreground: oklch(0.85 0.01 240);
   --muted: oklch(0.12 0.005 240);
-  --muted-foreground: oklch(0.70 0.01 240);
+  --muted-foreground: oklch(0.7 0.01 240);
   --accent: oklch(0.18 0.04 48);
   --accent-foreground: oklch(0.95 0.02 48);
   --destructive: oklch(0.55 0.18 25);
@@ -110,42 +110,42 @@
   --input: oklch(0.25 0.015 48 / 25%);
   --ring: oklch(0.68 0.21 48);
   --chart-1: oklch(0.68 0.21 48);
-  --chart-2: oklch(0.72 0.20 54);
+  --chart-2: oklch(0.72 0.2 54);
   --chart-3: oklch(0.55 0.22 42);
   --chart-4: oklch(0.82 0.08 160);
   --chart-5: oklch(0.95 0.02 48);
   --sidebar: oklch(0.06 0.005 240);
-  --sidebar-foreground: oklch(1.00 0 0);
+  --sidebar-foreground: oklch(1 0 0);
   --sidebar-primary: oklch(0.68 0.21 48);
   --sidebar-primary-foreground: oklch(0.05 0.005 240);
   --sidebar-accent: oklch(0.12 0.006 240);
-  --sidebar-accent-foreground: oklch(1.00 0 0);
+  --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.25 0.015 48 / 20%);
   --sidebar-ring: oklch(0.68 0.21 48);
 }
 
 .dark {
   --background: oklch(0.05 0.005 240);
-  --foreground: oklch(1.00 0 0);
+  --foreground: oklch(1 0 0);
   --ivory: oklch(0.98 0.001 240);
   --graphite: oklch(0.05 0.005 240);
   --surface: oklch(0.09 0.005 240);
   --surface-2: oklch(0.12 0.006 240);
   --line: oklch(0.24 0.015 48 / 25%);
   --card: oklch(0.09 0.005 240);
-  --card-foreground: oklch(1.00 0 0);
+  --card-foreground: oklch(1 0 0);
   --popover: oklch(0.09 0.005 240);
-  --popover-foreground: oklch(1.00 0 0);
+  --popover-foreground: oklch(1 0 0);
   --primary: oklch(0.68 0.21 48);
   --primary-foreground: oklch(0.05 0.005 240);
   --seal: oklch(0.68 0.21 48);
   --seal-foreground: oklch(0.05 0.005 240);
   --amber-deep: oklch(0.55 0.22 42);
-  --ember: oklch(0.72 0.20 54);
+  --ember: oklch(0.72 0.2 54);
   --secondary: oklch(0.14 0.005 240);
   --secondary-foreground: oklch(0.85 0.01 240);
   --muted: oklch(0.12 0.005 240);
-  --muted-foreground: oklch(0.70 0.01 240);
+  --muted-foreground: oklch(0.7 0.01 240);
   --accent: oklch(0.18 0.04 48);
   --accent-foreground: oklch(0.95 0.02 48);
   --destructive: oklch(0.55 0.18 25);
@@ -155,16 +155,16 @@
   --input: oklch(0.25 0.015 48 / 25%);
   --ring: oklch(0.68 0.21 48);
   --chart-1: oklch(0.68 0.21 48);
-  --chart-2: oklch(0.72 0.20 54);
+  --chart-2: oklch(0.72 0.2 54);
   --chart-3: oklch(0.55 0.22 42);
   --chart-4: oklch(0.82 0.08 160);
   --chart-5: oklch(0.95 0.02 48);
   --sidebar: oklch(0.06 0.005 240);
-  --sidebar-foreground: oklch(1.00 0 0);
+  --sidebar-foreground: oklch(1 0 0);
   --sidebar-primary: oklch(0.68 0.21 48);
   --sidebar-primary-foreground: oklch(0.05 0.005 240);
   --sidebar-accent: oklch(0.12 0.006 240);
-  --sidebar-accent-foreground: oklch(1.00 0 0);
+  --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.25 0.015 48 / 20%);
   --sidebar-ring: oklch(0.68 0.21 48);
 }
@@ -182,12 +182,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
 
-  .font-mono, code, kbd {
+  .font-mono,
+  code,
+  kbd {
     font-family: var(--font-mono);
   }
 }
@@ -195,27 +200,56 @@
 /* —— Atmospheric backgrounds —— */
 .bg-grid {
   background-image:
-    linear-gradient(to right, color-mix(in oklch, var(--foreground) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 5%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--foreground) 5%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--foreground) 5%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 56px 56px;
 }
 .bg-grid-fine {
   background-image:
-    linear-gradient(to right, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--foreground) 4%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--foreground) 4%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 24px 24px;
 }
 .bg-radial-ember {
   background-image:
-    radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in oklch, var(--ember) 14%, transparent), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 100%, color-mix(in oklch, var(--primary) 8%, transparent), transparent 60%);
+    radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      color-mix(in oklch, var(--ember) 14%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 80% 100%,
+      color-mix(in oklch, var(--primary) 8%, transparent),
+      transparent 60%
+    );
 }
 .bg-noise {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
 }
 
 .text-gradient-ember {
-  background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 60%, var(--amber-deep) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--foreground) 0%,
+    var(--primary) 60%,
+    var(--amber-deep) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -228,10 +262,13 @@
     inset 0 1px 0 color-mix(in oklch, white 30%, transparent),
     0 4px 15px -2px color-mix(in oklch, var(--primary) 30%, transparent);
   font-weight: 600;
-  transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .2s ease, background-color .2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 .btn-ember:hover {
-  background: linear-gradient(180deg, oklch(0.75 0.19 54), oklch(0.70 0.22 48));
+  background: linear-gradient(180deg, oklch(0.75 0.19 54), oklch(0.7 0.22 48));
   box-shadow:
     inset 0 1px 0 color-mix(in oklch, white 40%, transparent),
     0 8px 25px -4px color-mix(in oklch, var(--primary) 45%, transparent);
@@ -239,44 +276,87 @@
 }
 
 .divider-x {
-  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--foreground) 18%, transparent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--foreground) 18%, transparent),
+    transparent
+  );
   height: 1px;
 }
 
 /* Ticker / numeric */
-.tabular { font-variant-numeric: tabular-nums; }
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
 
 /* Reveal animations */
 @keyframes seal-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 30%, transparent); }
-  50% { box-shadow: 0 0 0 14px color-mix(in oklch, var(--primary) 0%, transparent); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 14px color-mix(in oklch, var(--primary) 0%, transparent);
+  }
 }
-.animate-seal-pulse { animation: seal-pulse 2.4s ease-out infinite; }
+.animate-seal-pulse {
+  animation: seal-pulse 2.4s ease-out infinite;
+}
 
 @keyframes scan {
-  0% { transform: translateY(-100%); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 }
 .animate-scan::after {
   content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(180deg, transparent, color-mix(in oklch, var(--primary) 35%, transparent), transparent);
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklch, var(--primary) 35%, transparent),
+    transparent
+  );
   animation: scan 2.6s ease-in-out infinite;
   pointer-events: none;
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-rise { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
 
 @keyframes hash-flicker {
-  0%, 100% { opacity: .55; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
-.animate-hash { animation: hash-flicker 1.8s ease-in-out infinite; }
+.animate-hash {
+  animation: hash-flicker 1.8s ease-in-out infinite;
+}
 
 .ring-orange-glow {
   box-shadow:
@@ -287,8 +367,16 @@
 /* Sealed bid card */
 .bid-sealed {
   background:
-    linear-gradient(180deg, color-mix(in oklch, var(--graphite) 4%, var(--surface)), var(--surface-2)),
-    repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in oklch, var(--foreground) 4%, transparent) 8px 9px);
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--graphite) 4%, var(--surface)),
+      var(--surface-2)
+    ),
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 8px,
+      color-mix(in oklch, var(--foreground) 4%, transparent) 8px 9px
+    );
 }
 
 /* Glassmorphism & Cinematic UI */
@@ -297,15 +385,18 @@
   border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 
+  box-shadow:
     0 10px 30px -10px rgba(0, 0, 0, 0.5),
     inset 0 1px 0px color-mix(in oklch, white 5%, transparent);
-  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
   border-color: color-mix(in oklch, var(--primary) 40%, transparent);
-  box-shadow: 
+  box-shadow:
     0 20px 40px -15px rgba(0, 0, 0, 0.7),
     0 0 30px -10px color-mix(in oklch, var(--primary) 20%, transparent),
     inset 0 1px 0px color-mix(in oklch, white 8%, transparent);
@@ -327,7 +418,9 @@
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(30px);
-  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal-on-scroll.revealed {
@@ -335,11 +428,21 @@
   transform: translateY(0);
 }
 
-.delay-100 { transition-delay: 100ms; }
-.delay-200 { transition-delay: 200ms; }
-.delay-300 { transition-delay: 300ms; }
-.delay-400 { transition-delay: 400ms; }
-.delay-500 { transition-delay: 500ms; }
+.delay-100 {
+  transition-delay: 100ms;
+}
+.delay-200 {
+  transition-delay: 200ms;
+}
+.delay-300 {
+  transition-delay: 300ms;
+}
+.delay-400 {
+  transition-delay: 400ms;
+}
+.delay-500 {
+  transition-delay: 500ms;
+}
 
 /* Spotlight card border tracking */
 .spotlight-card {
@@ -357,8 +460,12 @@
     color-mix(in oklch, var(--primary) 35%, transparent),
     transparent 50%
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -390,8 +497,10 @@
 
 /* Logo wall item hover states */
 .logo-wall-item {
-  color: oklch(0.70 0.025 250 / 45%);
-  transition: color 0.3s ease, filter 0.3s ease;
+  color: oklch(0.7 0.025 250 / 45%);
+  transition:
+    color 0.3s ease,
+    filter 0.3s ease;
 }
 .logo-wall-item:hover {
   color: var(--primary);
@@ -419,5 +528,3 @@ div[data-sonner-toast] [data-description] {
   font-size: 11px !important;
   color: var(--muted-foreground) !important;
 }
-
-

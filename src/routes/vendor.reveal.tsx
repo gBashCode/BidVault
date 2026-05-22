@@ -6,7 +6,17 @@ import { decryptBid } from "@/lib/crypto-client";
 import { CountdownRing } from "@/components/CountdownRing";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { toast } from "sonner";
-import { ShieldCheck, Unlock, Lock, CheckCircle2, AlertTriangle, Key, ArrowRight, Download, FileText } from "lucide-react";
+import {
+  ShieldCheck,
+  Unlock,
+  Lock,
+  CheckCircle2,
+  AlertTriangle,
+  Key,
+  ArrowRight,
+  Download,
+  FileText,
+} from "lucide-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -34,8 +44,9 @@ function VendorRevealPage() {
   });
 
   const activeTender =
-    tenders.find((t: any) => t.status === "OPEN" || t.status === "SEALED" || t.status === "REVEALED") ||
-    tenders[0];
+    tenders.find(
+      (t: any) => t.status === "OPEN" || t.status === "SEALED" || t.status === "REVEALED",
+    ) || tenders[0];
 
   const tenderId = activeTender?.id;
 
@@ -82,16 +93,23 @@ function VendorRevealPage() {
     onError: (err: any) => {
       console.error("Reveal error:", err);
       toast.error("Unsealing Failed", {
-        description: err.response?.data?.message || err.message || "Cryptographic proof could not be validated.",
+        description:
+          err.response?.data?.message ||
+          err.message ||
+          "Cryptographic proof could not be validated.",
       });
     },
   });
 
-  if (loadingTenders || loadingBids) {
+  const isLoading = loadingTenders || (!!tenderId && loadingBids);
+
+  if (isLoading) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <span className="font-mono text-xs text-muted-foreground">Synchronizing cryptographic state...</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          Synchronizing cryptographic state...
+        </span>
       </div>
     );
   }
@@ -114,10 +132,14 @@ function VendorRevealPage() {
         <AlertTriangle className="h-12 w-12 text-primary" />
         <h3 className="font-display text-xl font-semibold">No Bid Submitted</h3>
         <p className="text-sm text-muted-foreground max-w-md">
-          You have not submitted a sealed bid for the active tender: <strong className="text-foreground">{activeTender.title}</strong>.
-          Bids must be submitted before the deadline before they can be revealed.
+          You have not submitted a sealed bid for the active tender:{" "}
+          <strong className="text-foreground">{activeTender.title}</strong>. Bids must be submitted
+          before the deadline before they can be revealed.
         </p>
-        <Link to="/vendor/submit" className="btn-ember inline-flex h-9 items-center rounded-md px-4 text-xs font-semibold">
+        <Link
+          to="/vendor/submit"
+          className="btn-ember inline-flex h-9 items-center rounded-md px-4 text-xs font-semibold"
+        >
           Go to Submission Screen
         </Link>
       </div>
@@ -135,7 +157,8 @@ function VendorRevealPage() {
 
       if (!salt) {
         toast.error("Cryptographic Salt Missing", {
-          description: "We could not find the salt in this tab session. Please enter it manually in the input box below.",
+          description:
+            "We could not find the salt in this tab session. Please enter it manually in the input box below.",
         });
         setShowManualSaltInput(true);
         setIsDecrypting(false);
@@ -172,7 +195,10 @@ function VendorRevealPage() {
             encryptedBlob = new Uint8Array(arrayBuffer);
           }
         } catch (s3Err) {
-          console.warn("Could not download directly from S3 bucket URL (expected in mock offline environments):", s3Err);
+          console.warn(
+            "Could not download directly from S3 bucket URL (expected in mock offline environments):",
+            s3Err,
+          );
         }
       }
 
@@ -188,10 +214,17 @@ function VendorRevealPage() {
           plaintextBid = {
             amount: 750000, // Reasonable placeholder fallback
             currency: "EUR",
-            files: [{ name: "Technical Specifications Annex A.pdf", size: 4404019, type: "application/pdf" }],
+            files: [
+              {
+                name: "Technical Specifications Annex A.pdf",
+                size: 4404019,
+                type: "application/pdf",
+              },
+            ],
           };
           toast.warning("Decrypting fallback context", {
-            description: "No local cache found. Generating a standard mock bid context for demonstration purposes.",
+            description:
+              "No local cache found. Generating a standard mock bid context for demonstration purposes.",
           });
         }
       } else {
@@ -208,7 +241,9 @@ function VendorRevealPage() {
     } catch (err: any) {
       console.error("Local decryption/reveal failure:", err);
       toast.error("Decryption Failed", {
-        description: err.message || "The cryptographic salt or ciphertext does not match. Please verify your receipt details.",
+        description:
+          err.message ||
+          "The cryptographic salt or ciphertext does not match. Please verify your receipt details.",
       });
     } finally {
       setIsDecrypting(false);
@@ -251,9 +286,12 @@ function VendorRevealPage() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 mb-4 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
                   <Unlock className="h-7 w-7" />
                 </div>
-                <h3 className="font-display text-2xl font-semibold text-emerald-400">Bid Successfully Unsealed</h3>
+                <h3 className="font-display text-2xl font-semibold text-emerald-400">
+                  Bid Successfully Unsealed
+                </h3>
                 <p className="mt-2 text-[14px] text-muted-foreground max-w-md">
-                  Your bid envelope has been opened, verified against your recorded commitment, and is now visible to the procurement board.
+                  Your bid envelope has been opened, verified against your recorded commitment, and
+                  is now visible to the procurement board.
                 </p>
               </div>
 
@@ -269,19 +307,26 @@ function VendorRevealPage() {
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-muted-foreground">Commitment Hash</span>
-                  <span className="text-foreground truncate max-w-[220px]" title={bid.commitment}>{bid.commitment}</span>
+                  <span className="text-foreground truncate max-w-[220px]" title={bid.commitment}>
+                    {bid.commitment}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-muted-foreground">Verification Proof</span>
-                  <VerificationBadge 
-                    merkleRoot={activeTender.merkleRoot || "0x0000000000000000000000000000000000000000000000000000000000000000"} 
-                    commitment={bid.commitment} 
-                    proof={[]} 
+                  <VerificationBadge
+                    merkleRoot={
+                      activeTender.merkleRoot ||
+                      "0x0000000000000000000000000000000000000000000000000000000000000000"
+                    }
+                    commitment={bid.commitment}
+                    proof={[]}
                   />
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-muted-foreground">Ledger Timestamp</span>
-                  <span className="text-foreground">{dayjs(bid.revealedAt || bid.submittedAt).format("YYYY-MM-DD HH:mm:ss")} UTC</span>
+                  <span className="text-foreground">
+                    {dayjs(bid.revealedAt || bid.submittedAt).format("YYYY-MM-DD HH:mm:ss")} UTC
+                  </span>
                 </div>
               </div>
             </div>
@@ -289,11 +334,11 @@ function VendorRevealPage() {
             // Locked / Pending reveal state
             <div className="relative space-y-6">
               <div className="grid items-center gap-6 md:grid-cols-[auto_1fr]">
-                <CountdownRing 
-                  targetDate={new Date(activeTender.revealTime)} 
-                  size={180} 
-                  title={isLocked ? "Unsealing Lock" : "Ready"} 
-                  subtitle={isLocked ? "Time-locked" : "Open for reveal"} 
+                <CountdownRing
+                  targetDate={new Date(activeTender.revealTime)}
+                  size={180}
+                  title={isLocked ? "Unsealing Lock" : "Ready"}
+                  subtitle={isLocked ? "Time-locked" : "Open for reveal"}
                 />
                 <div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
@@ -307,11 +352,14 @@ function VendorRevealPage() {
                       ? `The unsealing phase opens on ${dayjs(activeTender.revealTime).format("YYYY-MM-DD HH:mm")} UTC. Your local browser salt is kept in local memory to be distributed automatically when this window arrives.`
                       : "The submission deadline has expired. You must now submit your local browser cryptographic salt to open the bid envelope and register it on the procurement ledger."}
                   </p>
-                  
+
                   {isLocked && (
                     <div className="mt-4 font-mono text-[11px] text-muted-foreground border border-border bg-surface/30 rounded-md p-3">
-                      Scheduled Reveal Local Time:<br />
-                      <strong className="text-foreground">{deadlineLocal} ({userTZ})</strong>
+                      Scheduled Reveal Local Time:
+                      <br />
+                      <strong className="text-foreground">
+                        {deadlineLocal} ({userTZ})
+                      </strong>
                     </div>
                   )}
                 </div>
@@ -343,7 +391,9 @@ function VendorRevealPage() {
                       onClick={() => setShowManualSaltInput(!showManualSaltInput)}
                       className="font-mono text-[10px] text-muted-foreground hover:text-primary underline cursor-pointer"
                     >
-                      {showManualSaltInput ? "Hide manual recovery options" : "Need manual recovery? (Paste cryptographic salt)"}
+                      {showManualSaltInput
+                        ? "Hide manual recovery options"
+                        : "Need manual recovery? (Upload Bid Receipt or Paste Salt)"}
                     </button>
                   </div>
 
@@ -354,8 +404,37 @@ function VendorRevealPage() {
                         Manual Cryptographic Recovery
                       </div>
                       <p className="text-muted-foreground text-[10.5px]">
-                        If your browser session was cleared, retrieve the 64-character hex salt from your receipt and paste it here:
+                        Upload your Bid Receipt JSON file or paste your 64-character hex salt here:
                       </p>
+                      
+                      <label className="block w-full border border-dashed border-border/80 hover:border-primary/50 bg-background/30 rounded-md p-3 text-center cursor-pointer transition-colors">
+                        <span className="text-primary hover:underline font-semibold">Upload BidReceipt.json</span>
+                        <input
+                          type="file"
+                          accept=".json"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              try {
+                                const text = await file.text();
+                                const data = JSON.parse(text);
+                                if (data.rawSalt) {
+                                  setManualSalt(data.rawSalt);
+                                  toast.success("Salt loaded from Bid Receipt!");
+                                } else {
+                                  toast.error("Invalid Bid Receipt file. Missing rawSalt.");
+                                }
+                              } catch (err) {
+                                toast.error("Could not parse JSON file.");
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+
+                      <div className="text-center text-muted-foreground opacity-50 py-1">- or -</div>
+
                       <input
                         type="text"
                         placeholder="0x... or 64-character hexadecimal salt string"
@@ -379,9 +458,10 @@ function VendorRevealPage() {
             </div>
             <h4 className="mt-2 font-display text-lg font-semibold">How unsealing works</h4>
             <p className="mt-2 text-[12.5px] text-muted-foreground leading-relaxed">
-              When the time-lock expires, the purchasing board distributes the trust signatures.
-              To ensure zero-knowledge custody, you must locally decrypt the bid payload inside your browser
-              using the salt generated at submission time, then register the unsealed bid onto the blockchain ledger.
+              When the time-lock expires, the purchasing board distributes the trust signatures. To
+              ensure zero-knowledge custody, you must locally decrypt the bid payload inside your
+              browser using the salt generated at submission time, then register the unsealed bid
+              onto the blockchain ledger.
             </p>
             <ul className="mt-4 space-y-2 font-mono text-[11px] text-muted-foreground">
               <li className="flex items-center gap-2">
@@ -406,7 +486,11 @@ function VendorRevealPage() {
             <div className="mt-3 space-y-2 font-mono text-[11px]">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Bid Status:</span>
-                <span className={bid.isValid ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"}>
+                <span
+                  className={
+                    bid.isValid ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"
+                  }
+                >
                   {bid.isValid ? "Revealed" : "Sealed & Locked"}
                 </span>
               </div>
@@ -416,7 +500,9 @@ function VendorRevealPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Submitted At:</span>
-                <span className="text-foreground">{dayjs(bid.submittedAt).format("YYYY-MM-DD")}</span>
+                <span className="text-foreground">
+                  {dayjs(bid.submittedAt).format("YYYY-MM-DD")}
+                </span>
               </div>
             </div>
           </div>

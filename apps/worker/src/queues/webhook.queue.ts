@@ -1,7 +1,7 @@
-import { createQueue } from '../lib/queue-factory.js';
-import * as webhookService from '../../../api/src/modules/webhooks/webhook.service.js';
+import { createQueue } from "../lib/queue-factory.js";
+import * as webhookService from "../../../api/src/modules/webhooks/webhook.service.js";
 
-export const queueName = 'webhooks';
+export const queueName = "webhooks";
 let webhookQueue: any = null;
 
 export async function getWebhookQueue() {

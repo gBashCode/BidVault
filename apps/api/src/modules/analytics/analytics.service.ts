@@ -1,6 +1,6 @@
-import { prisma, withRls } from '@sealedbid/db';
-import { keccak_256 } from '@noble/hashes/sha3';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
+import { prisma, withRls } from "@sealedbid/db";
+import { keccak_256 } from "@noble/hashes/sha3";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
 
 interface MetricsResult {
   totalTenders: number;
@@ -13,9 +13,9 @@ interface MetricsResult {
 export async function getComplianceMetrics(
   user: { id: string; orgId: string },
   from?: string,
-  to?: string
+  to?: string,
 ): Promise<MetricsResult> {
-  const isMock = (prisma as any).isDbReachable === false || !(prisma.$queryRawUnsafe);
+  const isMock = (prisma as any).isDbReachable === false || !prisma.$queryRawUnsafe;
 
   return await withRls(user, async (tx) => {
     // 1. Build date filter bounds
@@ -25,7 +25,8 @@ export async function getComplianceMetrics(
     if (!isMock) {
       try {
         // High-performance raw SQL metrics aggregation
-        const metrics: any = await tx.$queryRawUnsafe(`
+        const metrics: any = await tx.$queryRawUnsafe(
+          `
           SELECT 
             COUNT(t.id)::int as "totalTenders",
             COALESCE(AVG(EXTRACT(EPOCH FROM (t."revealTime" - t."createdAt")) / 3600), 0)::float as "avgCycleTime",
@@ -48,7 +49,11 @@ export async function getComplianceMetrics(
           FROM "Tender" t
           LEFT JOIN "Bid" b ON t.id = b."tenderId"
           WHERE t."orgId" = $1 AND t."createdAt" BETWEEN $2 AND $3
-        `, user.orgId, fromDate, toDate);
+        `,
+          user.orgId,
+          fromDate,
+          toDate,
+        );
 
         const row = metrics[0] || {};
         return {
@@ -59,16 +64,16 @@ export async function getComplianceMetrics(
           totalValueAwarded: row.totalValueAwarded || 0,
         };
       } catch (err) {
-        console.error('Raw query error, falling back to TS metrics computation:', err);
+        console.error("Raw query error, falling back to TS metrics computation:", err);
       }
     }
 
     // --- Offline Sandbox Fallback computation ---
-    const { mockDb } = await import('@sealedbid/db');
+    const { mockDb } = await import("@sealedbid/db");
 
     const tenders = mockDb.tenders.filter((t) => {
       const created = new Date(t.createdAt);
-      console.log('DEBUG TENDER MATCH:', {
+      console.log("DEBUG TENDER MATCH:", {
         tId: t.id,
         tOrgId: t.orgId,
         userOrgId: user.orgId,
@@ -76,13 +81,9 @@ export async function getComplianceMetrics(
         fromDate,
         toDate,
         orgMatch: t.orgId === user.orgId,
-        dateMatch: created >= fromDate && created <= toDate
+        dateMatch: created >= fromDate && created <= toDate,
       });
-      return (
-        t.orgId === user.orgId &&
-        created >= fromDate &&
-        created <= toDate
-      );
+      return t.orgId === user.orgId && created >= fromDate && created <= toDate;
     });
 
     // Total tenders
@@ -95,17 +96,19 @@ export async function getComplianceMetrics(
       const created = new Date(t.createdAt);
       totalCycleMs += Math.max(0, reveal.getTime() - created.getTime());
     }
-    const avgCycleTimeHours = totalTenders > 0 ? (totalCycleMs / totalTenders) / (3600 * 1000) : 0;
+    const avgCycleTimeHours = totalTenders > 0 ? totalCycleMs / totalTenders / (3600 * 1000) : 0;
 
     // On-Time Reveal Rate
     let onTimeReveals = 0;
     for (const t of tenders) {
       const bids = mockDb.bids.filter((b) => b.tenderId === t.id && b.revealedAt);
       if (bids.length > 0) {
-        const sorted = [...bids].sort((a, b) => new Date(a.revealedAt).getTime() - new Date(b.revealedAt).getTime());
+        const sorted = [...bids].sort(
+          (a, b) => new Date(a.revealedAt).getTime() - new Date(b.revealedAt).getTime(),
+        );
         const firstReveal = new Date(sorted[0].revealedAt).getTime();
         const revealDeadline = new Date(t.revealTime).getTime();
-        
+
         // Check if first bid revealed within 5 minutes after revealTime
         if (firstReveal <= revealDeadline + 5 * 60 * 1000) {
           onTimeReveals++;
@@ -124,12 +127,14 @@ export async function getComplianceMetrics(
     // Total Value Awarded (sum bid prices for status=AWARDED tenders)
     let totalValueAwarded = 0;
     for (const t of tenders) {
-      if (t.status === 'AWARDED') {
+      if (t.status === "AWARDED") {
         const bids = mockDb.bids.filter((b) => b.tenderId === t.id);
         for (const b of bids) {
           if (b.plaintextBid) {
-            const parsed = typeof b.plaintextBid === 'string' ? JSON.parse(b.plaintextBid) : b.plaintextBid;
-            const price = parsed.price !== undefined ? parsed.price : (parsed.unitPrice * (parsed.qty || 1));
+            const parsed =
+              typeof b.plaintextBid === "string" ? JSON.parse(b.plaintextBid) : b.plaintextBid;
+            const price =
+              parsed.price !== undefined ? parsed.price : parsed.unitPrice * (parsed.qty || 1);
             totalValueAwarded += price || 0;
           }
         }
@@ -146,14 +151,16 @@ export async function getComplianceMetrics(
   });
 }
 
-export async function tenderVolumeByMonth(orgId: string): Promise<Array<{ month: string; count: number }>> {
-  const { mockDb } = await import('@sealedbid/db');
+export async function tenderVolumeByMonth(
+  orgId: string,
+): Promise<Array<{ month: string; count: number }>> {
+  const { mockDb } = await import("@sealedbid/db");
   const tenders = mockDb.tenders.filter((t) => t.orgId === orgId);
 
   const groups: Record<string, number> = {};
   for (const t of tenders) {
     const d = new Date(t.createdAt);
-    const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     groups[monthStr] = (groups[monthStr] || 0) + 1;
   }
 
@@ -162,8 +169,10 @@ export async function tenderVolumeByMonth(orgId: string): Promise<Array<{ month:
     .map((month) => ({ month, count: groups[month] }));
 }
 
-export async function vendorParticipation(orgId: string): Promise<Array<{ tenderId: string; title: string; vendorCount: number }>> {
-  const { mockDb } = await import('@sealedbid/db');
+export async function vendorParticipation(
+  orgId: string,
+): Promise<Array<{ tenderId: string; title: string; vendorCount: number }>> {
+  const { mockDb } = await import("@sealedbid/db");
   const tenders = mockDb.tenders.filter((t) => t.orgId === orgId);
 
   return tenders.map((t) => {
@@ -178,8 +187,10 @@ export async function vendorParticipation(orgId: string): Promise<Array<{ tender
 }
 
 export async function avgBidsPerTender(orgId: string): Promise<number> {
-  const { mockDb } = await import('@sealedbid/db');
-  const tenders = mockDb.tenders.filter((t) => t.orgId === orgId && (t.status === 'REVEALED' || t.status === 'AWARDED'));
+  const { mockDb } = await import("@sealedbid/db");
+  const tenders = mockDb.tenders.filter(
+    (t) => t.orgId === orgId && (t.status === "REVEALED" || t.status === "AWARDED"),
+  );
   if (tenders.length === 0) return 0;
 
   let totalBids = 0;
@@ -190,8 +201,10 @@ export async function avgBidsPerTender(orgId: string): Promise<number> {
 }
 
 export async function collusionSuspects(orgId: string) {
-  const { mockDb } = await import('@sealedbid/db');
-  const tenders = mockDb.tenders.filter((t) => t.orgId === orgId && (t.status === 'REVEALED' || t.status === 'AWARDED'));
+  const { mockDb } = await import("@sealedbid/db");
+  const tenders = mockDb.tenders.filter(
+    (t) => t.orgId === orgId && (t.status === "REVEALED" || t.status === "AWARDED"),
+  );
 
   const nodes: Array<{ id: string; label: string }> = [];
   const edges: Array<{ from: string; to: string; weight: number }> = [];
@@ -200,13 +213,15 @@ export async function collusionSuspects(orgId: string) {
 
   for (const t of tenders) {
     const bids = mockDb.bids.filter((b) => b.tenderId === t.id && b.plaintextBid);
-    
+
     // Group bids by price to detect matches
     const priceGroups: Record<number, any[]> = {};
     for (const b of bids) {
-      const parsed = typeof b.plaintextBid === 'string' ? JSON.parse(b.plaintextBid) : b.plaintextBid;
-      const price = parsed.price !== undefined ? parsed.price : (parsed.unitPrice * (parsed.qty || 1));
-      
+      const parsed =
+        typeof b.plaintextBid === "string" ? JSON.parse(b.plaintextBid) : b.plaintextBid;
+      const price =
+        parsed.price !== undefined ? parsed.price : parsed.unitPrice * (parsed.qty || 1);
+
       if (price !== undefined) {
         if (!priceGroups[price]) priceGroups[price] = [];
         priceGroups[price].push(b);
@@ -233,7 +248,9 @@ export async function collusionSuspects(orgId: string) {
             }
 
             // Register edge
-            const existingEdge = edges.find((e) => (e.from === vA && e.to === vB) || (e.from === vB && e.to === vA));
+            const existingEdge = edges.find(
+              (e) => (e.from === vA && e.to === vB) || (e.from === vB && e.to === vA),
+            );
             if (existingEdge) {
               existingEdge.weight += 1;
             } else {
