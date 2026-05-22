@@ -182,7 +182,7 @@ describe('SealedBid Background Worker - Tender Lifecycle Integration Tests', () 
   });
 
   // ─── Test 4: Merkle Root Computation ────────────────────────────────
-  it('should correctly compute merkleRoot = keccak256(sorted commitments) on reveal', async () => {
+  it('should correctly compute merkleRoot using buildTenderMerkleTree on reveal', async () => {
     const tenderId = 'ctnd' + Math.random().toString(36).slice(2, 23);
     const revealTime = new Date(Date.now() - 5000);
 
@@ -199,11 +199,11 @@ describe('SealedBid Background Worker - Tender Lifecycle Integration Tests', () 
       },
     });
 
-    // Add bids with distinct commitments
+    // Add bids with distinct valid hex commitments
     const commitments = [
-      '0xcommitment_c',
-      '0xcommitment_a',
-      '0xcommitment_b',
+      '0x' + 'c'.repeat(64),
+      '0x' + 'a'.repeat(64),
+      '0x' + 'b'.repeat(64),
     ];
 
     for (let i = 0; i < commitments.length; i++) {
@@ -214,7 +214,7 @@ describe('SealedBid Background Worker - Tender Lifecycle Integration Tests', () 
           vendorId: managerId + i,
           commitment: commitments[i],
           encryptedBlob: 'http://s3/file',
-          saltHash: '0xhash',
+          saltHash: '0x' + 'hash'.repeat(16),
         },
       });
     }
@@ -222,15 +222,13 @@ describe('SealedBid Background Worker - Tender Lifecycle Integration Tests', () 
     // Run reveal-tender job
     await handleRevealTender(tenderId);
 
-    // Assert merkleRoot matching keccak256 of sorted commitments
+    // Assert merkleRoot matching buildTenderMerkleTree of commitments
     const updatedTender = await prisma.tender.findUnique({
       where: { id: tenderId },
     });
 
-    const sortedCommitments = [...commitments].sort();
-    const concatenated = sortedCommitments.join('');
-    const expectedHashBytes = keccak_256(utf8ToBytes(concatenated));
-    const expectedMerkleRoot = '0x' + bytesToHex(expectedHashBytes);
+    const { buildTenderMerkleTree } = await import('@sealedbid/crypto');
+    const { root: expectedMerkleRoot } = buildTenderMerkleTree(commitments);
 
     expect(updatedTender?.status).toBe('REVEALED');
     expect(updatedTender?.merkleRoot).toBe(expectedMerkleRoot);

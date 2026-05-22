@@ -38,6 +38,7 @@ export default fp(
       // Fallback generic error
       const status = error.statusCode ?? 500;
       const message = error.message ?? 'Internal Server Error';
+      console.error('🚨 ERROR PLUGIN CAUGHT:', error);
       reply.code(status).send({ statusCode: status, error: error.name ?? 'Error', message });
     });
   },

@@ -1,9 +1,10 @@
 import { assertTimeSync } from '../lib/time-guard.js';
 import { prisma } from '@sealedbid/db';
-import { AuditChain } from '@sealedbid/crypto';
+import { AuditChain, buildTenderMerkleTree } from '@sealedbid/crypto';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
 import { createQueue } from '../lib/queue-factory.js';
+import { getWebhookQueue } from './webhook.queue.js';
 
 export const queueName = 'tender-lifecycle';
 
@@ -17,10 +18,8 @@ export async function getQueue() {
 }
 
 export function computeMerkleRoot(commitments: string[]): string {
-  const sorted = [...commitments].sort();
-  const concatenated = sorted.join('');
-  const hashBytes = keccak_256(utf8ToBytes(concatenated));
-  return '0x' + bytesToHex(hashBytes);
+  const { root } = buildTenderMerkleTree(commitments);
+  return root;
 }
 
 /**
@@ -109,6 +108,14 @@ export async function handleSealTender(tenderId: string): Promise<void> {
     },
   });
 
+  // Trigger webhook
+  try {
+    const wq = await getWebhookQueue();
+    await wq.add('deliver', { eventType: 'tender.sealed', tenderId });
+  } catch (err) {
+    console.error('Failed to queue tender.sealed webhook:', err);
+  }
+
   const q = await getQueue();
   const delay = process.env.NODE_ENV === 'test' ? 50 : 60000;
   await q.add('reveal-tender', { tenderId }, {
@@ -125,8 +132,8 @@ export async function handleSealTender(tenderId: string): Promise<void> {
  * Job: 'reveal-tender'
  * Logic:
  * 1. Transaction: UPDATE Tender SET status='REVEALED' WHERE id=? AND status='SEALED'
- * 2. Compute merkleRoot = keccak256(sorted commitments) and save it
- * 3. Create AuditLog: TENDER_REVEALED, payload={merkleRoot}
+ * 2. Compute merkleRoot = real Merkle tree root and save it
+ * 3. Create AuditLog: TENDER_REVEALED, payload={merkleRoot, bidCount}
  */
 export async function handleRevealTender(tenderId: string): Promise<void> {
   const updateResult = await prisma.tender.updateMany({
@@ -149,7 +156,7 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
   });
 
   const commitments = bids.map((b: any) => b.commitment);
-  const merkleRoot = computeMerkleRoot(commitments);
+  const { root: merkleRoot } = buildTenderMerkleTree(commitments);
 
   await prisma.tender.update({
     where: { id: tenderId },
@@ -167,6 +174,7 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
   const payload = {
     tenderId,
     merkleRoot,
+    bidCount: commitments.length,
     timestamp: new Date().toISOString(),
   };
 
@@ -181,4 +189,13 @@ export async function handleRevealTender(tenderId: string): Promise<void> {
       eventHash,
     },
   });
+
+  // Trigger webhook
+  try {
+    const wq = await getWebhookQueue();
+    await wq.add('deliver', { eventType: 'tender.revealed', tenderId });
+  } catch (err) {
+    console.error('Failed to queue tender.revealed webhook:', err);
+  }
 }
+

@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { prisma } from '@sealedbid/db';
-import { CreateTenderBody, TenderResponse, PublishTenderParams } from './tender.schema';
+import { prisma, withRls } from '@sealedbid/db';
+import { CreateTenderBody, TenderResponse, PublishTenderParams } from './tender.schema.js';
 import { z } from 'zod';
 
 export default async function tenderRoutes(fastify: FastifyInstance) {
@@ -18,28 +18,31 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
     if (subDead > revTime) {
       return reply.code(400).send({ message: 'submissionDeadline must be before revealTime' });
     }
-    const tender = await prisma.tender.create({
-      data: {
-        orgId: request.user.orgId,
-        title,
-        description: description ?? null,
-        submissionDeadline: subDead,
-        revealTime: revTime,
-        status: 'DRAFT',
-      },
+
+    return await withRls(request.user, async (tx) => {
+      const tender = await tx.tender.create({
+        data: {
+          orgId: request.user.orgId,
+          title,
+          description: description ?? null,
+          submissionDeadline: subDead,
+          revealTime: revTime,
+          status: 'DRAFT',
+        },
+      });
+      // audit log
+      await tx.auditLog.create({
+        data: {
+          entityId: tender.id,
+          entityType: 'TENDER',
+          action: 'CREATED',
+          performedBy: request.user.id,
+          performedAt: new Date(),
+          hashChain: '' // placeholder, actual chaining handled in DB trigger
+        },
+      });
+      return reply.code(201).send(tender);
     });
-    // audit log
-    await prisma.auditLog.create({
-      data: {
-        entityId: tender.id,
-        entityType: 'TENDER',
-        action: 'CREATED',
-        performedBy: request.user.id,
-        performedAt: new Date(),
-        hashChain: '' // placeholder, actual chaining handled in DB trigger
-      },
-    });
-    return reply.code(201).send(tender);
   });
 
   // PATCH /v1/tenders/:id/publish
@@ -51,25 +54,29 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params as any;
-    const tender = await prisma.tender.findUnique({ where: { id } });
-    if (!tender) return reply.code(404).send({ message: 'Tender not found' });
-    if (tender.orgId !== request.user.orgId) return reply.code(403).send({ message: 'Forbidden' });
-    if (tender.status !== 'DRAFT') return reply.code(400).send({ message: 'Only DRAFT can be published' });
-    const updated = await prisma.tender.update({
-      where: { id },
-      data: { status: 'OPEN' },
+
+    return await withRls(request.user, async (tx) => {
+      const tender = await tx.tender.findUnique({ where: { id } });
+      if (!tender) return reply.code(404).send({ message: 'Tender not found' });
+      if (tender.orgId !== request.user.orgId) return reply.code(403).send({ message: 'Forbidden' });
+      if (tender.status !== 'DRAFT') return reply.code(400).send({ message: 'Only DRAFT can be published' });
+      
+      const updated = await tx.tender.update({
+        where: { id },
+        data: { status: 'OPEN' },
+      });
+      await tx.auditLog.create({
+        data: {
+          entityId: id,
+          entityType: 'TENDER',
+          action: 'PUBLISHED',
+          performedBy: request.user.id,
+          performedAt: new Date(),
+          hashChain: ''
+        },
+      });
+      return reply.send(updated);
     });
-    await prisma.auditLog.create({
-      data: {
-        entityId: id,
-        entityType: 'TENDER',
-        action: 'PUBLISHED',
-        performedBy: request.user.id,
-        performedAt: new Date(),
-        hashChain: ''
-      },
-    });
-    return reply.send(updated);
   });
 
   // GET /v1/tenders/:id
@@ -78,18 +85,22 @@ export default async function tenderRoutes(fastify: FastifyInstance) {
     schema: { params: z.object({ id: z.string().cuid() }).strict(), response: { 200: TenderResponse } },
   }, async (request, reply) => {
     const { id } = request.params as any;
-    const tender = await prisma.tender.findUnique({
-      where: { id },
-      include: { bids: true },
+
+    return await withRls(request.user, async (tx) => {
+      const tender = await tx.tender.findUnique({
+        where: { id },
+        include: { bids: true },
+      });
+      if (!tender) return reply.code(404).send({ message: 'Tender not found' });
+      if (tender.orgId !== request.user.orgId && request.user.role !== 'VENDOR') {
+        return reply.code(403).send({ message: 'Forbidden' });
+      }
+      
+      const response: any = { ...tender };
+      if (tender.status !== 'REVEALED' && request.user.role !== 'PROCUREMENT_MANAGER' && request.user.role !== 'AUDITOR') {
+        delete response.bids;
+      }
+      return reply.send(response);
     });
-    if (!tender) return reply.code(404).send({ message: 'Tender not found' });
-    if (tender.orgId !== request.user.orgId && request.user.role !== 'VENDOR') {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-    const response: any = { ...tender };
-    if (tender.status !== 'REVEALED' && request.user.role !== 'PROCUREMENT_MANAGER' && request.user.role !== 'AUDITOR') {
-      delete response.bids;
-    }
-    return reply.send(response);
   });
 }

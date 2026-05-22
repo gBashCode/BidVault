@@ -36,12 +36,13 @@ enum UserRole {
 // ─── Models ──────────────────────────────────────────────────
 
 model Org {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   type      OrgType
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   tenders   Tender[]
   users     User[]
+  webhooks  Webhook[]
 
   @@index([type])
 }
@@ -112,4 +113,32 @@ model AuditLog {
 
   @@index([tenderId, createdAt])
   @@index([eventHash])
+}
+
+model Webhook {
+  id         String            @id @default(cuid())
+  orgId      String
+  url        String
+  secret     String            // never return in API
+  events     String[]          // ['tender.revealed', 'bid.submitted']
+  isActive   Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  org        Org               @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([orgId, isActive])
+}
+
+model WebhookDelivery {
+  id          String   @id @default(cuid())
+  webhookId   String
+  eventId     String   // from payload.id
+  eventType   String
+  statusCode  Int?
+  error       String?
+  attempt     Int      @default(1)
+  deliveredAt DateTime @default(now())
+  webhook     Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId, deliveredAt])
 }

@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { assertTimeSync, getLastDriftMs } from './lib/time-guard.js';
 import { getQueue } from './queues/tender-scheduler.js';
 import { initWorker } from './workers/tender.worker.js';
+import { initWebhookWorker } from './workers/webhook.worker.js';
 
 async function bootstrap() {
   console.log('🏁 SealedBid Worker: Booting...');
@@ -17,7 +18,8 @@ async function bootstrap() {
 
   // 2. Initialize and start the BullMQ Worker process
   const worker = await initWorker();
-  console.log('👷 Background worker started successfully.');
+  const webhookWorker = await initWebhookWorker();
+  console.log('👷 Background workers started successfully.');
 
   // 3. Register the repeatable 'check-reveals' job
   const queue = await getQueue();
@@ -40,8 +42,9 @@ async function bootstrap() {
       await assertTimeSync();
     } catch (err: any) {
       console.error(`🚨 Halting worker process due to critical NTP verification error: ${err.message}`);
-      // Close the worker immediately to stop processing
+      // Close the workers immediately to stop processing
       await worker.close();
+      await webhookWorker.close();
       await queue.close();
       process.exit(1);
     }

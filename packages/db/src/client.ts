@@ -22,12 +22,14 @@ const realPrisma = new PrismaClient({
 });
 
 // Shared in-memory database for sandbox fallback mode
-const mockDb = {
+export const mockDb = {
   orgs: [] as any[],
   users: [] as any[],
   tenders: [] as any[],
   bids: [] as any[],
   auditLogs: [] as any[],
+  webhooks: [] as any[],
+  webhookDeliveries: [] as any[],
 };
 
 // Check database reachability synchronously/lazily on first request
@@ -56,9 +58,63 @@ function makeMockCuid(prefix = 'c') {
   return (prefix + randomPart).slice(0, 25).toLowerCase();
 }
 
+export const mockRlsContext = {
+  currentUserId: null as string | null,
+  currentOrgId: null as string | null,
+};
+
+function mockCheckUserRls(user: any): boolean {
+  if (!mockRlsContext.currentOrgId) return true;
+  return user.orgId === mockRlsContext.currentOrgId;
+}
+
+function mockCheckTenderRls(tender: any): boolean {
+  if (!mockRlsContext.currentOrgId) return true;
+  return tender.orgId === mockRlsContext.currentOrgId;
+}
+
+function mockCheckBidRls(bid: any): boolean {
+  if (!mockRlsContext.currentUserId) return true;
+  const user = mockDb.users.find((u) => u.id === mockRlsContext.currentUserId);
+  if (!user) return false;
+  
+  if (bid.vendorId === user.id) return true;
+  
+  if (['PROCUREMENT_MANAGER', 'AUDITOR', 'ORG_ADMIN'].includes(user.role)) {
+    const tender = mockDb.tenders.find((t) => t.id === bid.tenderId);
+    if (tender && tender.orgId === user.orgId) return true;
+  }
+  
+  return false;
+}
+
+function mockCheckWebhookRls(webhook: any): boolean {
+  if (!mockRlsContext.currentOrgId) return true;
+  return webhook.orgId === mockRlsContext.currentOrgId;
+}
+
+function mockCheckWebhookDeliveryRls(delivery: any): boolean {
+  if (!mockRlsContext.currentOrgId) return true;
+  const webhook = mockDb.webhooks.find((w) => w.id === delivery.webhookId);
+  return webhook ? webhook.orgId === mockRlsContext.currentOrgId : false;
+}
+
 const mockPrisma = {
   $connect: async () => {},
   $disconnect: async () => {},
+  $transaction: async (fn: (tx: any) => Promise<any>) => {
+    return await fn(mockPrisma);
+  },
+  $executeRawUnsafe: async (sql: string) => {
+    const userMatch = sql.match(/SET LOCAL app\.current_user_id\s*=\s*'([^']+)'/i);
+    if (userMatch) mockRlsContext.currentUserId = userMatch[1];
+    
+    const orgMatch = sql.match(/SET LOCAL app\.current_org_id\s*=\s*'([^']+)'/i);
+    if (orgMatch) mockRlsContext.currentOrgId = orgMatch[1];
+  },
+  $queryRawUnsafe: async (sql: string, ...values: any[]) => {
+    return [];
+  },
   org: {
     create: async (args: any) => {
       const org = { id: args.data.id || makeMockCuid(), ...args.data };
@@ -71,6 +127,12 @@ const mockPrisma = {
     create: async (args: any) => {
       const user = { id: args.data.id || makeMockCuid(), ...args.data };
       mockDb.users.push(user);
+      return user;
+    },
+    findUnique: async (args: any) => {
+      const user = mockDb.users.find((u) => u.id === args.where.id || u.email === args.where.email);
+      if (!user) return null;
+      if (!mockCheckUserRls(user)) return null;
       return user;
     },
     deleteMany: async () => { mockDb.users = []; return { count: 0 }; },
@@ -91,6 +153,7 @@ const mockPrisma = {
     update: async (args: any) => {
       const tender = mockDb.tenders.find((t) => t.id === args.where.id);
       if (!tender) throw new Error('Tender not found');
+      if (!mockCheckTenderRls(tender)) throw new Error('Tender access forbidden by RLS');
       if (tender.status === 'OPEN' && args.data.revealTime && new Date(args.data.revealTime).getTime() !== new Date(tender.revealTime).getTime()) {
         throw new PrismaConstraintError('Cannot edit revealTime after tender is OPEN');
       }
@@ -101,11 +164,12 @@ const mockPrisma = {
     findUnique: async (args: any) => {
       const tender = mockDb.tenders.find((t) => t.id === args.where.id);
       if (!tender) return null;
+      if (!mockCheckTenderRls(tender)) return null;
       // Populate bids if requested
       if (args.include?.bids) {
         return {
           ...tender,
-          bids: mockDb.bids.filter((b) => b.tenderId === tender.id),
+          bids: mockDb.bids.filter((b) => b.tenderId === tender.id && mockCheckBidRls(b)),
         };
       }
       return tender;
@@ -126,7 +190,8 @@ const mockPrisma = {
           return true;
         });
       }
-      return filtered;
+      // Apply RLS filter
+      return filtered.filter(mockCheckTenderRls);
     },
     updateMany: async (args: any) => {
       let count = 0;
@@ -134,7 +199,8 @@ const mockPrisma = {
         if (args.where.id && t.id !== args.where.id) return false;
         if (args.where.status && t.status !== args.where.status) return false;
         return true;
-      });
+      }).filter(mockCheckTenderRls);
+      
       for (const t of tendersToUpdate) {
         Object.assign(t, args.data);
         t.updatedAt = new Date();
@@ -155,7 +221,7 @@ const mockPrisma = {
       }
       const bid = {
         id: args.data.id || makeMockCuid(),
-        createdAt: new Date(),
+        submittedAt: new Date(),
         updatedAt: new Date(),
         isValid: false,
         ...args.data,
@@ -166,6 +232,7 @@ const mockPrisma = {
     update: async (args: any) => {
       const bid = mockDb.bids.find((b) => b.id === args.where.id);
       if (!bid) throw new Error('Bid not found');
+      if (!mockCheckBidRls(bid)) throw new Error('Bid access forbidden by RLS');
       const tender = mockDb.tenders.find((t) => t.id === bid.tenderId);
       if (!tender) throw new Error('Tender not found');
       if (args.data.plaintextBid !== null && args.data.plaintextBid !== undefined) {
@@ -178,13 +245,17 @@ const mockPrisma = {
       return bid;
     },
     findUnique: async (args: any) => {
-      return mockDb.bids.find((b) => b.id === args.where.id) || null;
+      const bid = mockDb.bids.find((b) => b.id === args.where.id);
+      if (!bid) return null;
+      if (!mockCheckBidRls(bid)) return null;
+      return bid;
     },
     findMany: async (args: any) => {
+      let filtered = mockDb.bids;
       if (args?.where?.tenderId) {
-        return mockDb.bids.filter((b) => b.tenderId === args.where.tenderId);
+        filtered = filtered.filter((b) => b.tenderId === args.where.tenderId);
       }
-      return mockDb.bids;
+      return filtered.filter(mockCheckBidRls);
     },
     deleteMany: async () => { mockDb.bids = []; return { count: 0 }; },
   },
@@ -214,6 +285,57 @@ const mockPrisma = {
       return mockDb.auditLogs;
     },
     deleteMany: async () => { mockDb.auditLogs = []; return { count: 0 }; },
+  },
+  webhook: {
+    create: async (args: any) => {
+      const webhook = {
+        id: args.data.id || makeMockCuid(),
+        isActive: args.data.isActive !== undefined ? args.data.isActive : true,
+        createdAt: new Date(),
+        ...args.data,
+      };
+      mockDb.webhooks.push(webhook);
+      return webhook;
+    },
+    findUnique: async (args: any) => {
+      const webhook = mockDb.webhooks.find((w) => w.id === args.where.id);
+      if (!webhook || !mockCheckWebhookRls(webhook)) return null;
+      return webhook;
+    },
+    findMany: async (args: any) => {
+      let filtered = mockDb.webhooks;
+      if (args?.where?.orgId) {
+        filtered = filtered.filter((w) => w.orgId === args.where.orgId);
+      }
+      return filtered.filter(mockCheckWebhookRls);
+    },
+    update: async (args: any) => {
+      const webhook = mockDb.webhooks.find((w) => w.id === args.where.id);
+      if (!webhook || !mockCheckWebhookRls(webhook)) throw new Error('Webhook not found');
+      Object.assign(webhook, args.data);
+      return webhook;
+    },
+    deleteMany: async () => { mockDb.webhooks = []; return { count: 0 }; },
+  },
+  webhookDelivery: {
+    create: async (args: any) => {
+      const delivery = {
+        id: args.data.id || makeMockCuid(),
+        deliveredAt: new Date(),
+        attempt: args.data.attempt || 1,
+        ...args.data,
+      };
+      mockDb.webhookDeliveries.push(delivery);
+      return delivery;
+    },
+    findMany: async (args: any) => {
+      let filtered = mockDb.webhookDeliveries;
+      if (args?.where?.webhookId) {
+        filtered = filtered.filter((d) => d.webhookId === args.where.webhookId);
+      }
+      return filtered.filter(mockCheckWebhookDeliveryRls);
+    },
+    deleteMany: async () => { mockDb.webhookDeliveries = []; return { count: 0 }; },
   },
 };
 
@@ -258,3 +380,5 @@ export const prisma = new Proxy({} as typeof realPrisma, {
 }) as any;
 
 export default prisma;
+export * from './rls.js';
+
