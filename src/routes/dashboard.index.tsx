@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { CircularCountdown } from "@/components/countdown";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/dashboard/")({
   head: () => ({
     meta: [
       { title: "Enterprise console — SealedBid" },
@@ -19,7 +20,7 @@ function Dashboard() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <div className="mx-auto grid max-w-[1400px] grid-cols-[220px_1fr] gap-0">
-        <Sidebar />
+        <DashboardSidebar />
         <main className="border-l border-border px-8 py-8">
           <Breadcrumb />
           <Header />
@@ -42,69 +43,6 @@ function Dashboard() {
   );
 }
 
-function Sidebar() {
-  const groups = [
-    {
-      label: "Operate",
-      items: [
-        { l: "Overview", active: false },
-        { l: "Active tenders", active: true, badge: "8" },
-        { l: "Reveal queue", badge: "3" },
-        { l: "Drafts" },
-      ],
-    },
-    {
-      label: "Network",
-      items: [{ l: "Vendors" }, { l: "Invitations" }, { l: "KYC reviews" }],
-    },
-    {
-      label: "Trust",
-      items: [{ l: "Audit ledger" }, { l: "Compliance" }, { l: "Custody status" }],
-    },
-    { label: "Account", items: [{ l: "Members" }, { l: "Settings" }] },
-  ];
-  return (
-    <aside className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto bg-sidebar px-4 py-6">
-      <div className="rounded-lg border border-border bg-background/50 p-3">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Workspace
-        </div>
-        <div className="mt-1 flex items-center justify-between">
-          <div className="text-[13px] font-medium">Federal Procurement · BE</div>
-          <span className="font-mono text-[10px] text-success">Live</span>
-        </div>
-      </div>
-      <nav className="mt-6 space-y-6">
-        {groups.map((g) => (
-          <div key={g.label}>
-            <div className="px-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              {g.label}
-            </div>
-            <div className="mt-2 space-y-0.5">
-              {g.items.map((i) => (
-                <div
-                  key={i.l}
-                  className={`flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-[13px] transition-colors ${
-                    i.active
-                      ? "bg-sidebar-accent text-foreground"
-                      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
-                  }`}
-                >
-                  <span>{i.l}</span>
-                  {i.badge && (
-                    <span className="rounded-sm bg-primary/15 px-1.5 font-mono text-[10px] text-primary">
-                      {i.badge}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-    </aside>
-  );
-}
 
 function Breadcrumb() {
   return (
