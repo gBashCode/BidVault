@@ -84,29 +84,11 @@ function SubmissionFlow() {
 
   useEffect(() => {
     if (progress === 100 && step < 4) {
-      if (step === 3) {
-        // Mocking the call to the server function for demonstration
-        import("../actions/bids").then(({ submitBid }) => {
-          submitBid({
-            data: {
-              tenderId: "GOV-2026-ROAD-INFRA-014",
-              vendorId: "Helios Civil Works AG",
-              commitHash: "0x8f3e9a21bc4d7e10ff019cba0e72ef41",
-              sizeMb: 32.4,
-              objectKey: "bids/GOV-2026/helios.enc",
-            }
-          }).catch(console.error).finally(() => {
-            setStep((s) => s + 1);
-            setProgress(0);
-          });
-        });
-      } else {
-        const t = setTimeout(() => {
-          setStep((s) => s + 1);
-          setProgress(0);
-        }, 500);
-        return () => clearTimeout(t);
-      }
+      const t = setTimeout(() => {
+        setStep((s) => s + 1);
+        setProgress(0);
+      }, 500);
+      return () => clearTimeout(t);
     }
   }, [progress, step]);
 

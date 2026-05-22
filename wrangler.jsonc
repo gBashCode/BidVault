@@ -1,20 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "sealed-bid-backend",
+  "name": "tanstack-start-app",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "bidvault-d1",
-      "database_id": "local-bidvault-d1"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "BUCKET",
-      "bucket_name": "bidvault-bids"
-    }
-  ]
 }
