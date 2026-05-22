@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────
+
+enum OrgType {
+  ENTERPRISE
+  GOVERNMENT
+}
+
+enum TenderStatus {
+  DRAFT
+  OPEN
+  SEALED
+  REVEALED
+  CANCELLED
+  AWARDED
+}
+
+enum UserRole {
+  ORG_ADMIN
+  PROCUREMENT_MANAGER
+  AUDITOR
+  VENDOR
+}
+
+// ─── Models ──────────────────────────────────────────────────
+
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  type      OrgType
+  createdAt DateTime @default(now())
+  tenders   Tender[]
+  users     User[]
+
+  @@index([type])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  orgId     String
+  email     String   @unique
+  role      UserRole
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  bids      Bid[]
+  tenders   Tender[] @relation("TenderCreatedBy")
+
+  @@index([orgId, role])
+}
+
+model Tender {
+  id                 String       @id @default(cuid())
+  orgId              String
+  createdById        String
+  title              String
+  description        String       @db.Text
+  submissionDeadline DateTime
+  revealTime         DateTime
+  status             TenderStatus @default(DRAFT)
+  merkleRoot         String?      // set at revealTime
+  org                Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdBy          User         @relation("TenderCreatedBy", fields: [createdById], references: [id])
+  bids               Bid[]
+  auditLogs          AuditLog[]
+
+  @@index([orgId, status])
+  @@index([revealTime, status]) // critical for worker
+}
+
+model Bid {
+  id            String    @id @default(cuid())
+  tenderId      String
+  vendorId      String    // User.id where role=VENDOR
+  commitment    String    // keccak256(plaintext + salt) - from Phase 1
+  encryptedBlob String    // S3 URL to ciphertext
+  saltHash      String    // keccak256(salt) - allows checking salt reuse without storing salt
+  submittedAt   DateTime  @default(now())
+
+  // NULL until after revealTime + vendor calls reveal
+  plaintextBid  Json?
+  revealSalt    String?
+  revealedAt    DateTime?
+  isValid       Boolean?  // result of verifyCommitment
+
+  tender        Tender    @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  vendor        User      @relation(fields: [vendorId], references: [id])
+
+  @@unique([tenderId, vendorId]) // one bid per vendor per tender
+  @@index([tenderId])
+}
+
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  tenderId  String?  // null for org-level events
+  prevHash  String   // 0x...64, "GENESIS" for first row
+  eventType String   // "TENDER_CREATED", "BID_SUBMITTED", "BID_REVEALED", etc
+  actorId   String?  // User.id who triggered
+  payload   Json     // event-specific data
+  eventHash String   // keccak256(prevHash || eventType || payload)
+  createdAt DateTime @default(now())
+  tender    Tender?  @relation(fields: [tenderId], references: [id])
+
+  @@index([tenderId, createdAt])
+  @@index([eventHash])
+}

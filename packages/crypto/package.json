@@ -1,0 +1,21 @@
+{
+  "name": "@sealedbid/crypto",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^1.6.0"
+  }
+}

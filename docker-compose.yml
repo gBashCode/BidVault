@@ -1,0 +1,19 @@
+# SealedBid – PostgreSQL 15 for local development
+# Usage: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sealedbid-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sealedbid
+      POSTGRES_PASSWORD: sealedbid
+      POSTGRES_DB: sealedbid
+    volumes:
+      - sealedbid_pgdata:/var/lib/postgresql/data
+
+volumes:
+  sealedbid_pgdata:
