@@ -1,6 +1,5 @@
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
-import { timingSafeEqual } from 'node:crypto';
 
 /**
  * Recursively sorts all keys of an object to ensure deterministic JSON serialization.
@@ -40,6 +39,20 @@ export function createCommitment(data: object, salt: string): string {
 }
 
 /**
+ * Constant-time comparison of two strings.
+ */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+/**
  * Verifies a commitment against given data and salt in constant-time.
  * @param data The JSON-serializable object to verify
  * @param salt The salt string to verify
@@ -58,12 +71,5 @@ export function verifyCommitment(data: object, salt: string, commitment: string)
     return false;
   }
 
-  if (commitment.length !== expected.length) {
-    return false;
-  }
-
-  const expectedBuf = Buffer.from(expected);
-  const commitmentBuf = Buffer.from(commitment);
-
-  return timingSafeEqual(expectedBuf, commitmentBuf);
+  return safeCompare(expected, commitment);
 }
