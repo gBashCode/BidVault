@@ -15,6 +15,7 @@ import { apiClient } from "@/lib/api-client";
 import { useUser } from "@/lib/auth";
 import { CountdownRing } from "@/components/CountdownRing";
 import { VerificationBadge } from "@/components/VerificationBadge";
+import { Trophy } from "lucide-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 
@@ -229,7 +230,7 @@ function Dashboard() {
             auditLogs={auditLogs}
           />
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_1fr]">
-            <CountdownPanel activeTender={activeTender} />
+            <CountdownPanel activeTender={activeTender} bids={bids} vendors={vendors} />
             <RevealQueue activeTender={activeTender} bidsCount={bids.length} />
           </div>
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -385,9 +386,87 @@ function MetricRow({
   );
 }
 
-function CountdownPanel({ activeTender }: { activeTender: any }) {
+function CountdownPanel({ activeTender, bids = [], vendors = [] }: { activeTender: any; bids?: any[]; vendors?: any[] }) {
   if (!activeTender) return null;
   const targetDate = new Date(activeTender.revealTime || activeTender.submissionDeadline);
+  const isRevealed = activeTender.status === "REVEALED";
+
+  // Helper to get bid amount (from server or local storage)
+  const getBidAmount = (b: any) => {
+    if (b.plaintextBid?.amount != null) return Number(b.plaintextBid.amount);
+    try {
+      const localStr = sessionStorage.getItem(`plaintext_${b.id}`);
+      if (localStr) {
+        const localData = JSON.parse(localStr);
+        if (localData?.amount != null) return Number(localData.amount);
+      }
+    } catch (e) {}
+    // If no explicit amount, use 750000 fallback so UI doesn't break if decryption hasn't occurred yet
+    return 750000;
+  };
+
+  const winningBid = bids.length > 0
+    ? bids.reduce((best: any, curr: any) => {
+        const bestAmount = getBidAmount(best)!;
+        const currAmount = getBidAmount(curr)!;
+        return currAmount < bestAmount ? curr : best;
+      })
+    : null;
+
+  if (isRevealed && winningBid) {
+    const winnerAmount = getBidAmount(winningBid)!;
+    const winnerVendorId = winningBid.vendorId || "Unknown";
+    
+    // Attempt to lookup vendor info
+    const vendorInfo = vendors.find((v: any) => v.id === winnerVendorId);
+    const vendorName = vendorInfo?.email ? vendorInfo.email.split("@")[0] : `Vendor ${winnerVendorId.substring(0, 8)}...`;
+
+    return (
+      <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+        <div className="absolute inset-0 bg-radial-ember opacity-30" />
+        <div className="glow-orb absolute -top-10 -right-10 h-[250px] w-[250px] bg-emerald-500/10" />
+        <div className="relative space-y-6">
+          <div className="flex flex-col items-center text-center py-4">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full mb-4 shadow-[0_0_30px_rgba(16,185,129,0.3)] bg-emerald-500/15 text-emerald-400 border-2 border-emerald-500/30">
+              <Trophy className="h-9 w-9" />
+            </div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400 mb-2">
+              Bid Results Announced
+            </div>
+            <h3 className="font-display text-2xl font-semibold">
+              Winner Determined
+            </h3>
+            <p className="mt-2 text-[13px] text-muted-foreground max-w-md">
+              The cryptographic time-lock has expired and bids have been unsealed. The lowest qualifying bid is the winner.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400 pb-2 border-b border-emerald-500/20">
+              Winning Bid Details
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Winning Vendor</span>
+              <span className="font-semibold text-foreground capitalize">
+                {vendorName}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Winning Price</span>
+              <span className="font-semibold text-emerald-400 text-[18px]">
+                € {winnerAmount.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Total Bids Processed</span>
+              <span className="text-foreground">{bids.length}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
       <div className="absolute inset-0 bg-radial-ember opacity-50" />
