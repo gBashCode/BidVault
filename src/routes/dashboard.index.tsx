@@ -45,6 +45,7 @@ function Dashboard() {
       const res = await apiClient.get("/v1/tenders");
       return res.data;
     },
+    refetchInterval: 2000,
   });
 
   const activeTender =
@@ -63,6 +64,7 @@ function Dashboard() {
       return res.data;
     },
     enabled: !!tenderId,
+    refetchInterval: 2000,
   });
 
   // 3. Fetch audit logs for the active tender

@@ -49,6 +49,7 @@ function RevealQueuePage() {
       const res = await apiClient.get("/v1/tenders");
       return res.data as any[];
     },
+    refetchInterval: 2000,
   });
 
   // 2. Fetch metrics to get the bids count for each tender
@@ -60,6 +61,7 @@ function RevealQueuePage() {
       return res.data;
     },
     enabled: !!orgId,
+    refetchInterval: 2000,
   });
 
   const isLoading = loadingTenders || loadingMetrics;

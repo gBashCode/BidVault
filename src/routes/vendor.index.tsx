@@ -37,6 +37,7 @@ function VendorOverview() {
       const res = await apiClient.get("/v1/tenders");
       return res.data;
     },
+    refetchInterval: 2000,
   });
 
   const activeTender = searchTenderId ? tenders.find((t: any) => t.id === searchTenderId) : null;
@@ -62,6 +63,7 @@ function VendorOverview() {
       return res.data;
     },
     enabled: !!tenderId,
+    refetchInterval: 2000,
   });
 
   const isLoading = loadingTenders || (!!tenderId && (loadingBids || loadingDocs));
