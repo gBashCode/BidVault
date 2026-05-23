@@ -83,15 +83,44 @@ function VendorRevealPage() {
       });
       return res.data;
     },
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["tender-bids", tenderId] });
+      const previousBids = queryClient.getQueryData(["tender-bids", tenderId]);
+
+      if (previousBids) {
+        queryClient.setQueryData(
+          ["tender-bids", tenderId],
+          (old: any) =>
+            old?.map((b: any) =>
+              b.id === bidId
+                ? {
+                    ...b,
+                    isValid: true,
+                    plaintextBid: variables.plaintextBid,
+                    revealSalt: variables.salt,
+                    revealedAt: new Date().toISOString(),
+                  }
+                : b
+            )
+        );
+      }
+
+      return { previousBids };
+    },
+    onSuccess: (data) => {
+      const displayAmount = data?.plaintextBid?.amount ?? data?.plaintextBid?.price ?? 750000;
       toast.success("Bid successfully unsealed!", {
-        description: "Your decrypted bid has been verified and registered on the public ledger.",
+        description: `€ ${Number(displayAmount).toLocaleString()} is now public. Your decrypted bid has been verified and registered on the public ledger.`,
       });
       queryClient.invalidateQueries({ queryKey: ["tender-bids", tenderId] });
       queryClient.invalidateQueries({ queryKey: ["tenders"] });
+      queryClient.invalidateQueries({ queryKey: ["public-tenders"] });
     },
-    onError: (err: any) => {
+    onError: (err: any, variables, context: any) => {
       console.error("Reveal error:", err);
+      if (context?.previousBids) {
+        queryClient.setQueryData(["tender-bids", tenderId], context.previousBids);
+      }
       toast.error("Unsealing Failed", {
         description:
           err.response?.data?.message ||

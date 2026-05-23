@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from "react";
-import { getGlobalTime } from "@/lib/time";
+import { useServerTime } from "@/lib/time-sync";
 
 interface CountdownRingProps {
-  targetDate: Date;
+  targetDate?: Date;
+  revealTime?: Date | string | number;
+  createdAt?: Date | string | number;
   totalDurationMs?: number; // Total timeframe to calculate percentage progress
   size?: number;
   strokeWidth?: number;
@@ -13,6 +15,8 @@ interface CountdownRingProps {
 
 export function CountdownRing({
   targetDate,
+  revealTime,
+  createdAt,
   totalDurationMs = 1000 * 60 * 60 * 24 * 3, // Default to 3 days
   size = 220,
   strokeWidth = 3,
@@ -20,6 +24,7 @@ export function CountdownRing({
   title = "Reveal in",
   subtitle = "Mathematically sealed",
 }: CountdownRingProps) {
+  const { now } = useServerTime();
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const onCompleteRef = useRef(onComplete);
   const timerRef = useRef<number | null>(null);
@@ -31,11 +36,15 @@ export function CountdownRing({
 
   useEffect(() => {
     completedCalledRef.current = false;
-    const targetTime = new Date(targetDate).getTime();
+    const end = revealTime
+      ? new Date(revealTime).getTime()
+      : targetDate
+        ? new Date(targetDate).getTime()
+        : 0;
 
     const tick = () => {
-      const now = getGlobalTime();
-      const diff = targetTime - now;
+      const current = now();
+      const diff = end - current;
 
       if (diff <= 0) {
         setTimeLeft(0);
@@ -60,11 +69,22 @@ export function CountdownRing({
         cancelAnimationFrame(timerRef.current);
       }
     };
-  }, [targetDate]);
+  }, [targetDate, revealTime, now]);
 
   const r = size / 2 - strokeWidth - 5;
   const c = 2 * Math.PI * r;
-  const progress = Math.min(1, Math.max(0, 1 - timeLeft / totalDurationMs));
+
+  const end = revealTime
+    ? new Date(revealTime).getTime()
+    : targetDate
+      ? new Date(targetDate).getTime()
+      : 0;
+  const start = createdAt
+    ? new Date(createdAt).getTime()
+    : end - totalDurationMs;
+
+  const total = end - start;
+  const progress = total > 0 ? Math.min(1, Math.max(0, 1 - timeLeft / total)) : 0;
   const strokeDashoffset = c * (1 - progress);
 
   // Format time

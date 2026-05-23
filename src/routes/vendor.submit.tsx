@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { encryptBid } from "@/lib/crypto-client";
 import { BidSealAnimation } from "@/components/BidSealAnimation";
@@ -59,6 +59,7 @@ function Header() {
 const steps = ["Upload", "Encrypt", "Hash", "Verify", "Sealed"];
 
 function SubmissionFlow() {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -248,6 +249,11 @@ function SubmissionFlow() {
         etag,
         s3Key: keyPath,
       });
+
+      // Invalidate relevant queries immediately so dashboard/vendor lists sync
+      queryClient.invalidateQueries({ queryKey: ["tenders"] });
+      queryClient.invalidateQueries({ queryKey: ["tender-bids", activeTender.id] });
+      queryClient.invalidateQueries({ queryKey: ["public-tenders"] });
 
       setProgress(100);
       await new Promise((resolve) => setTimeout(resolve, 400));

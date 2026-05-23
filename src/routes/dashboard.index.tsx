@@ -64,7 +64,9 @@ function Dashboard() {
       return res.data;
     },
     enabled: !!tenderId,
-    refetchInterval: 2000,
+    refetchInterval: activeTender?.status === "SEALED" || activeTender?.status === "OPEN" ? 5000 : false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // 3. Fetch audit logs for the active tender
@@ -595,10 +597,15 @@ function ActiveTendersTable({
           </thead>
           <tbody className="divide-y divide-border">
             {bids.map((b) => {
+              const amountVal = b.plaintextBid?.amount ?? b.plaintextBid?.price;
               const displayVal =
-                isRevealed && b.plaintextBid?.amount
-                  ? `€ ${Number(b.plaintextBid.amount).toLocaleString()}`
-                  : "••••";
+                (isRevealed || b.isValid === true) && amountVal ? (
+                  <span className="text-white font-mono animate-fade-in">
+                    € {Number(amountVal).toLocaleString()}
+                  </span>
+                ) : (
+                  <span className="text-gray-700">••••</span>
+                );
 
               return (
                 <tr

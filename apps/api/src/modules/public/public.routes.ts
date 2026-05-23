@@ -120,4 +120,16 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     reply.header("Cache-Control", "public, max-age=30");
     return reply.send(response);
   });
+
+  // GET /v1/time
+  // Accurate server time (NTP sync) with cache disabled
+  fastify.get("/v1/time", async (request, reply) => {
+    reply.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    reply.header("Pragma", "no-cache");
+    reply.header("Expires", "0");
+    return reply.send({
+      now: new Date().toISOString(),
+      serverTime: Date.now(),
+    });
+  });
 }
