@@ -1,7 +1,6 @@
 {
   "name": "tanstack_start_ts",
   "private": true,
-  "sideEffects": false,
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -10,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "pnpm -r run test"
+    "test": "pnpm -r run test",
+    "deploy": "wrangler deploy -c dist/server/wrangler.json"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
