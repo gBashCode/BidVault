@@ -9,6 +9,7 @@ import {
   FileText,
   CheckCircle2,
   ChevronRight,
+  Trophy,
 } from "lucide-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -148,7 +149,7 @@ function VendorOverview() {
       <MetricRow activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <CountdownPanel activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} />
+        <CountdownPanel activeTender={activeTender} isSubmitted={isSubmitted} bid={bid} allBids={bids} />
         <TenderDocuments documents={documents} />
       </div>
     </div>
@@ -265,13 +266,107 @@ function CountdownPanel({
   activeTender,
   isSubmitted,
   bid,
+  allBids,
 }: {
   activeTender: any;
   isSubmitted: boolean;
   bid: any;
+  allBids: any[];
 }) {
   const targetDate = new Date(activeTender.submissionDeadline);
   const isExpired = Date.now() > targetDate.getTime();
+  const isRevealed = activeTender.status === "REVEALED";
+
+  // Find the winning bid (lowest amount) among revealed bids
+  const revealedBids = allBids.filter(
+    (b: any) => b.isValid && b.plaintextBid && b.plaintextBid.amount != null,
+  );
+  const winningBid = revealedBids.length > 0
+    ? revealedBids.reduce((best: any, curr: any) =>
+        Number(curr.plaintextBid.amount) < Number(best.plaintextBid.amount) ? curr : best,
+      )
+    : null;
+
+  if (isRevealed && winningBid) {
+    const winnerAmount = Number(winningBid.plaintextBid.amount);
+    const winnerVendorId = winningBid.vendorId || "Unknown";
+    const isCurrentUserWinner = bid && bid.vendorId === winningBid.vendorId;
+
+    return (
+      <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
+        <div className="absolute inset-0 bg-radial-ember opacity-30" />
+        <div className="glow-orb absolute -top-10 -right-10 h-[250px] w-[250px] bg-emerald-500/10" />
+        <div className="relative space-y-6">
+          <div className="flex flex-col items-center text-center py-4">
+            <div className={`flex h-20 w-20 items-center justify-center rounded-full mb-4 shadow-[0_0_30px_rgba(16,185,129,0.3)] ${
+              isCurrentUserWinner
+                ? "bg-emerald-500/15 text-emerald-400 border-2 border-emerald-500/30"
+                : "bg-amber-500/15 text-amber-400 border-2 border-amber-500/30"
+            }`}>
+              <Trophy className="h-9 w-9" />
+            </div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400 mb-2">
+              Bid Results Announced
+            </div>
+            <h3 className="font-display text-2xl font-semibold">
+              {isCurrentUserWinner ? "Congratulations! You won!" : "Winner Announced"}
+            </h3>
+            <p className="mt-2 text-[13px] text-muted-foreground max-w-md">
+              {isCurrentUserWinner
+                ? "Your bid has been selected as the winning submission for this tender."
+                : "The bids have been unsealed and the winner has been determined."}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400 pb-2 border-b border-emerald-500/20">
+              Winning Bid Details
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Winner</span>
+              <span className={`font-semibold text-[14px] ${isCurrentUserWinner ? "text-emerald-400" : "text-foreground"}`}>
+                {isCurrentUserWinner ? "You" : `Vendor ${winnerVendorId.substring(0, 8)}...`}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Winning Price</span>
+              <span className="font-semibold text-emerald-400 text-[18px]">
+                € {winnerAmount.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Total Bids Received</span>
+              <span className="text-foreground">{allBids.length}</span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+              <span className="text-muted-foreground">Bids Revealed</span>
+              <span className="text-foreground">{revealedBids.length}</span>
+            </div>
+          </div>
+
+          {bid && bid.plaintextBid && (
+            <div className="rounded-xl border border-border bg-surface/50 p-5 space-y-3">
+              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary pb-2 border-b border-border/50">
+                Your Bid Summary
+              </div>
+              <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+                <span className="text-muted-foreground">Your Bid Amount</span>
+                <span className="font-semibold text-foreground text-[15px]">
+                  € {Number(bid.plaintextBid.amount).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
+                <span className="text-muted-foreground">Status</span>
+                <span className={`font-semibold ${isCurrentUserWinner ? "text-emerald-400" : "text-amber-400"}`}>
+                  {isCurrentUserWinner ? "✓ Winner" : "Not Selected"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
