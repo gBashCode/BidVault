@@ -277,20 +277,34 @@ function CountdownPanel({
   const isExpired = Date.now() > targetDate.getTime();
   const isRevealed = activeTender.status === "REVEALED";
 
-  // Find the winning bid (lowest amount) among all bids (use 750000 fallback if not yet revealed)
-  const winningBid = allBids.length > 0
-    ? allBids.reduce((best: any, curr: any) => {
-        const bestAmount = best.plaintextBid?.amount != null ? Number(best.plaintextBid.amount) : 750000;
-        const currAmount = curr.plaintextBid?.amount != null ? Number(curr.plaintextBid.amount) : 750000;
+  // Helper to get bid amount (from server or local storage)
+  const getBidAmount = (b: any) => {
+    if (b.plaintextBid?.amount != null) return Number(b.plaintextBid.amount);
+    try {
+      const localStr = sessionStorage.getItem(`plaintext_${b.id}`);
+      if (localStr) {
+        const localData = JSON.parse(localStr);
+        if (localData?.amount != null) return Number(localData.amount);
+      }
+    } catch (e) {}
+    return null; // No amount found
+  };
+
+  // Find the winning bid (lowest amount) among all bids that have a known amount
+  const validBids = allBids.filter((b) => getBidAmount(b) !== null);
+  const winningBid = validBids.length > 0
+    ? validBids.reduce((best: any, curr: any) => {
+        const bestAmount = getBidAmount(best)!;
+        const currAmount = getBidAmount(curr)!;
         return currAmount < bestAmount ? curr : best;
       })
     : null;
 
   if (isRevealed && winningBid) {
-    const winnerAmount = winningBid.plaintextBid?.amount != null ? Number(winningBid.plaintextBid.amount) : 750000;
+    const winnerAmount = getBidAmount(winningBid)!;
     const winnerVendorId = winningBid.vendorId || "Unknown";
     const isCurrentUserWinner = bid && bid.vendorId === winningBid.vendorId;
-    const myAmount = bid?.plaintextBid?.amount != null ? Number(bid.plaintextBid.amount) : 750000;
+    const myAmount = bid ? getBidAmount(bid) : null;
 
     return (
       <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
@@ -348,7 +362,7 @@ function CountdownPanel({
               <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
                 <span className="text-muted-foreground">Your Bid Amount</span>
                 <span className="font-semibold text-foreground text-[15px]">
-                  € {myAmount.toLocaleString()}
+                  {myAmount !== null ? `€ ${myAmount.toLocaleString()}` : "Sealed"}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
