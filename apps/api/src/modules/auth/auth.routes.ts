@@ -9,6 +9,10 @@ const SignupSchema = z.object({
   password: z.string().min(8),
   companyName: z.string().min(2),
   role: z.enum(["VENDOR", "PROCUREMENT_MANAGER"]),
+  gstn: z.string().min(1, "GSTN is required"),
+  address: z.string().min(1, "Address is required"),
+  phone: z.string().min(1, "Phone is required"),
+  website: z.string().url("Website must be a valid URL"),
 });
 
 const LoginSchema = z.object({
@@ -39,7 +43,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { email, password, companyName, role } = request.body as z.infer<typeof SignupSchema>;
+      const { email, password, companyName, role, gstn, address, phone, website } = request.body as z.infer<typeof SignupSchema>;
 
       // Hash email for deterministic DB lookup
       const emailHash = hashPII(email);
@@ -59,12 +63,20 @@ export default async function authRoutes(fastify: FastifyInstance) {
       // Encrypt PII
       const encryptedEmail = await encryptPII(email);
       const encryptedName = await encryptPII(companyName);
+      const encryptedGstn = await encryptPII(gstn);
+      const encryptedAddress = await encryptPII(address);
+      const encryptedPhone = await encryptPII(phone);
+      const encryptedWebsite = await encryptPII(website);
       const passwordHash = hashPassword(password);
 
       // Create Org first
       const org = await prisma.org.create({
         data: {
           encryptedName,
+          encryptedGstn,
+          encryptedAddress,
+          encryptedPhone,
+          encryptedWebsite,
           type: role === "VENDOR" ? "ENTERPRISE" : "GOVERNMENT",
         },
       });

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { signupAction, loginAction } from "@/lib/auth";
 import { VaultMark } from "@/components/vault-mark";
-import { ShieldCheck, User, Building2, Mail, KeyRound, Loader2, ChevronRight, Lock, CreditCard } from "lucide-react";
+import { ShieldCheck, User, Building2, Mail, KeyRound, Loader2, ChevronRight, Lock, CreditCard, MapPin, Phone, Globe, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -44,12 +44,16 @@ function AuthPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const companyName = formData.get("companyName") as string;
+    const gstn = formData.get("gstn") as string;
+    const address = formData.get("address") as string;
+    const phone = formData.get("phone") as string;
+    const website = formData.get("website") as string;
 
     try {
       let res;
       if (authMode === "signup") {
         res = await signupAction({
-          data: { email, password, companyName, role: role! },
+          data: { email, password, companyName, role: role!, gstn, address, phone, website },
         });
         toast.success("Registration Complete", {
           description: "Your PII has been locally encrypted and stored securely.",
@@ -228,19 +232,79 @@ function AuthPage() {
 
             <form onSubmit={handleAuth} className="w-full space-y-4">
               {authMode === "signup" && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Company / Org Name</label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <input 
-                      type="text" 
-                      name="companyName" 
-                      required 
-                      className="w-full bg-surface/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-                      placeholder="Acme Corp"
-                    />
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Company / Org Name</label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <input 
+                        type="text" 
+                        name="companyName" 
+                        required 
+                        className="w-full bg-surface/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                        placeholder="Acme Corp"
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">GSTN / Tax ID</label>
+                    <div className="relative">
+                      <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <input 
+                        type="text" 
+                        name="gstn" 
+                        required 
+                        className="w-full bg-surface/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                        placeholder="e.g. 22AAAAA0000A1Z5"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Company Address</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <input 
+                        type="text" 
+                        name="address" 
+                        required 
+                        className="w-full bg-surface/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                        placeholder="123 Corporate Blvd, City"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Phone</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <input 
+                          type="tel" 
+                          name="phone" 
+                          required 
+                          className="w-full bg-surface/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                          placeholder="+1 234 567 8900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Website</label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <input 
+                          type="url" 
+                          name="website" 
+                          required 
+                          className="w-full bg-surface/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">

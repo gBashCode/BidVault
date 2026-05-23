@@ -45,7 +45,11 @@ export const signupAction = createServerFn({ method: "POST" })
     email: z.string().email(),
     password: z.string(),
     companyName: z.string(),
-    role: z.enum(["VENDOR", "PROCUREMENT_MANAGER"])
+    role: z.enum(["VENDOR", "PROCUREMENT_MANAGER"]),
+    gstn: z.string().min(1),
+    address: z.string().min(1),
+    phone: z.string().min(1),
+    website: z.string().url()
   }))
   .handler(async ({ data }) => {
     try {

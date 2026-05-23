@@ -38,8 +38,12 @@ enum UserRole {
 model Org {
   id            String    @id @default(cuid())
   encryptedName String    // AES-256-GCM encrypted
-  type          OrgType
-  createdAt DateTime  @default(now())
+  type             OrgType
+  encryptedGstn    String?
+  encryptedAddress String?
+  encryptedPhone   String?
+  encryptedWebsite String?
+  createdAt        DateTime  @default(now())
   tenders   Tender[]
   users     User[]
   webhooks  Webhook[]
