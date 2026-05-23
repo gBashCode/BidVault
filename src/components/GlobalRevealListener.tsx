@@ -18,7 +18,6 @@ export function GlobalRevealListener() {
     },
     enabled: !!user,
     refetchInterval: 2000,
-    refetchIntervalInBackground: true,
   });
 
   const [revealedTenderId, setRevealedTenderId] = useState<string | null>(null);
@@ -35,6 +34,9 @@ export function GlobalRevealListener() {
         setRevealedTenderId(tender.id);
         // Only trigger one at a time
         break;
+      } else if (isRevealed) {
+        // Ensure it's in the set if it was already revealed on load
+        previouslyRevealedRef.current.add(tender.id);
       }
     }
   }, [tenders]);
@@ -53,7 +55,6 @@ export function GlobalRevealListener() {
       const hasUnrevealed = query?.state?.data?.some((b: any) => !b.isValid);
       return hasUnrevealed ? 1000 : false;
     },
-    refetchIntervalInBackground: true,
   });
 
   // Auto-reveal for Vendor

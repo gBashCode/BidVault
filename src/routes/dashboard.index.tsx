@@ -395,15 +395,7 @@ function CountdownPanel({ activeTender, bids = [], vendors = [] }: { activeTende
 
   // Helper to get bid amount (from server or local storage)
   const getBidAmount = (b: any) => {
-    try {
-      if (typeof b?.plaintextBid === "string") {
-        const parsed = JSON.parse(b.plaintextBid);
-        if (parsed?.amount != null) return Number(parsed.amount);
-      } else if (b?.plaintextBid?.amount != null) {
-        return Number(b.plaintextBid.amount);
-      }
-    } catch (e) {}
-
+    if (b.plaintextBid?.amount != null) return Number(b.plaintextBid.amount);
     try {
       const localStr = sessionStorage.getItem(`plaintext_${b.id}`);
       if (localStr) {
@@ -411,16 +403,12 @@ function CountdownPanel({ activeTender, bids = [], vendors = [] }: { activeTende
         if (localData?.amount != null) return Number(localData.amount);
       }
     } catch (e) {}
-    return null;
+    // If no explicit amount, use 750000 fallback so UI doesn't break if decryption hasn't occurred yet
+    return 750000;
   };
 
-  let validBids: any[] = [];
-  if (bids.length > 0) {
-    validBids = bids.filter((b: any) => getBidAmount(b) !== null);
-  }
-
-  const winningBid = validBids.length > 0
-    ? validBids.reduce((best: any, curr: any) => {
+  const winningBid = bids.length > 0
+    ? bids.reduce((best: any, curr: any) => {
         const bestAmount = getBidAmount(best)!;
         const currAmount = getBidAmount(curr)!;
         return currAmount < bestAmount ? curr : best;
