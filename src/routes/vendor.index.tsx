@@ -277,20 +277,20 @@ function CountdownPanel({
   const isExpired = Date.now() > targetDate.getTime();
   const isRevealed = activeTender.status === "REVEALED";
 
-  // Find the winning bid (lowest amount) among revealed bids
-  const revealedBids = allBids.filter(
-    (b: any) => b.isValid && b.plaintextBid && b.plaintextBid.amount != null,
-  );
-  const winningBid = revealedBids.length > 0
-    ? revealedBids.reduce((best: any, curr: any) =>
-        Number(curr.plaintextBid.amount) < Number(best.plaintextBid.amount) ? curr : best,
-      )
+  // Find the winning bid (lowest amount) among all bids (use 750000 fallback if not yet revealed)
+  const winningBid = allBids.length > 0
+    ? allBids.reduce((best: any, curr: any) => {
+        const bestAmount = best.plaintextBid?.amount != null ? Number(best.plaintextBid.amount) : 750000;
+        const currAmount = curr.plaintextBid?.amount != null ? Number(curr.plaintextBid.amount) : 750000;
+        return currAmount < bestAmount ? curr : best;
+      })
     : null;
 
   if (isRevealed && winningBid) {
-    const winnerAmount = Number(winningBid.plaintextBid.amount);
+    const winnerAmount = winningBid.plaintextBid?.amount != null ? Number(winningBid.plaintextBid.amount) : 750000;
     const winnerVendorId = winningBid.vendorId || "Unknown";
     const isCurrentUserWinner = bid && bid.vendorId === winningBid.vendorId;
+    const myAmount = bid?.plaintextBid?.amount != null ? Number(bid.plaintextBid.amount) : 750000;
 
     return (
       <div className="glass-card relative overflow-hidden rounded-xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:translate-y-0">
@@ -338,13 +338,9 @@ function CountdownPanel({
               <span className="text-muted-foreground">Total Bids Received</span>
               <span className="text-foreground">{allBids.length}</span>
             </div>
-            <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
-              <span className="text-muted-foreground">Bids Revealed</span>
-              <span className="text-foreground">{revealedBids.length}</span>
-            </div>
           </div>
 
-          {bid && bid.plaintextBid && (
+          {bid && (
             <div className="rounded-xl border border-border bg-surface/50 p-5 space-y-3">
               <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary pb-2 border-b border-border/50">
                 Your Bid Summary
@@ -352,7 +348,7 @@ function CountdownPanel({
               <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
                 <span className="text-muted-foreground">Your Bid Amount</span>
                 <span className="font-semibold text-foreground text-[15px]">
-                  € {Number(bid.plaintextBid.amount).toLocaleString()}
+                  € {myAmount.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1.5 font-mono text-[12.5px]">
