@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
@@ -395,7 +395,15 @@ function CountdownPanel({ activeTender, bids = [], vendors = [] }: { activeTende
 
   // Helper to get bid amount (from server or local storage)
   const getBidAmount = (b: any) => {
-    if (b.plaintextBid?.amount != null) return Number(b.plaintextBid.amount);
+    try {
+      if (typeof b?.plaintextBid === "string") {
+        const parsed = JSON.parse(b.plaintextBid);
+        if (parsed?.amount != null) return Number(parsed.amount);
+      } else if (b?.plaintextBid?.amount != null) {
+        return Number(b.plaintextBid.amount);
+      }
+    } catch (e) {}
+
     try {
       const localStr = sessionStorage.getItem(`plaintext_${b.id}`);
       if (localStr) {
@@ -403,12 +411,16 @@ function CountdownPanel({ activeTender, bids = [], vendors = [] }: { activeTende
         if (localData?.amount != null) return Number(localData.amount);
       }
     } catch (e) {}
-    // If no explicit amount, use 750000 fallback so UI doesn't break if decryption hasn't occurred yet
-    return 750000;
+    return null;
   };
 
-  const winningBid = bids.length > 0
-    ? bids.reduce((best: any, curr: any) => {
+  let validBids: any[] = [];
+  if (bids.length > 0) {
+    validBids = bids.filter((b: any) => getBidAmount(b) !== null);
+  }
+
+  const winningBid = validBids.length > 0
+    ? validBids.reduce((best: any, curr: any) => {
         const bestAmount = getBidAmount(best)!;
         const currAmount = getBidAmount(curr)!;
         return currAmount < bestAmount ? curr : best;

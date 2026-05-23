@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
+import { getGlobalTime } from "@/lib/time";
 
 export function useCountdown(target: Date) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => getGlobalTime());
+  
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    const id = setInterval(() => setNow(getGlobalTime()), 500); // 500ms for tighter sync
     return () => clearInterval(id);
   }, []);
+  
   const diff = Math.max(0, target.getTime() - now);
   const d = Math.floor(diff / 86_400_000);
   const h = Math.floor((diff / 3_600_000) % 24);
   const m = Math.floor((diff / 60_000) % 60);
   const s = Math.floor((diff / 1000) % 60);
+  
   return { d, h, m, s, done: diff === 0, totalMs: diff };
 }
 

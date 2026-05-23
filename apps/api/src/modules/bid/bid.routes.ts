@@ -240,7 +240,7 @@ export default async function bidRoutes(fastify: FastifyInstance) {
         const updatedBid = await tx.bid.update({
           where: { id: bidId },
           data: {
-            plaintextBid: JSON.stringify(plaintextBid),
+            plaintextBid: plaintextBid,
             revealSalt: salt,
             isValid: true,
             revealedAt: new Date(),
@@ -324,7 +324,7 @@ export default async function bidRoutes(fastify: FastifyInstance) {
             isValid: b.isValid ?? false,
           } as any;
           if (tender.status === "REVEALED") {
-            base.plaintextBid = b.plaintextBid ? JSON.parse(b.plaintextBid as string) : undefined;
+            base.plaintextBid = b.plaintextBid;
           }
           return base;
         });

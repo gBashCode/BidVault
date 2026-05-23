@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { getGlobalTime } from "@/lib/time";
 
 interface CountdownRingProps {
   targetDate: Date;
@@ -33,7 +34,7 @@ export function CountdownRing({
     const targetTime = new Date(targetDate).getTime();
 
     const tick = () => {
-      const now = Date.now();
+      const now = getGlobalTime();
       const diff = targetTime - now;
 
       if (diff <= 0) {

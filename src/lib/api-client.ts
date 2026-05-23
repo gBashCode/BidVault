@@ -17,7 +17,7 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       // Unauthorized: Redirect to auth page and clean up any local states
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
         window.location.href = "/auth";
       }
     } else if (status === 423) {

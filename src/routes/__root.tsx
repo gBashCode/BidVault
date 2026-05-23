@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { GlobalRevealListener } from "@/components/GlobalRevealListener";
 
 import appCss from "../styles.css?url";
 
@@ -137,6 +138,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <GlobalRevealListener />
       <Toaster theme="dark" position="bottom-right" closeButton />
     </QueryClientProvider>
   );
